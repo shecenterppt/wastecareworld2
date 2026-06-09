@@ -1238,8 +1238,6 @@
         return;
       }
 
-      Swal.fire({ title: 'กำลังลงทะเบียน...', didOpen: () => { Swal.showLoading(); } });
-
       await syncSave(() => {
         const newUser = {
           empId: loginEmpID,
@@ -1253,7 +1251,6 @@
         currentUser = newUser;
       });
 
-      Swal.close();
       closeAllSheets();
       document.getElementById('admin-badge').classList.add('hidden');
       Swal.fire({ icon: 'success', title: 'ยินดีต้อนรับผู้ใช้ใหม่!', text: `คุณ ${nickname} ลงทะเบียนสำเร็จ`, timer: 2000, showConfirmButton: false });
@@ -1628,8 +1625,6 @@
         return;
       }
 
-      Swal.fire({ title: 'กำลังเช็คอิน...', didOpen: () => { Swal.showLoading(); } });
-
       let streak = parseInt(currentUser.streak) || 0;
       
       // Calculate new streak
@@ -1674,7 +1669,6 @@
         });
       });
 
-      Swal.close();
       closeAllSheets();
       
       playSound('success');
@@ -1812,7 +1806,7 @@
       // Filter bins suitable for current stage (case-insensitive)
       const filterBins = bins.filter(b => {
         const stage = (b.stage || '').trim().toLowerCase();
-        return !stage || stage === 'both' || stage === currentStageName.toLowerCase();
+        return !stage || stage === 'both' || stage === 'all' || stage === currentStageName.toLowerCase();
       });
       
       filterBins.forEach(bin => {
@@ -1833,7 +1827,7 @@
       const allWastes = db.wastes || [];
       const filterWastes = allWastes.filter(w => {
         const stage = (w.stage || '').trim().toLowerCase();
-        return !stage || stage === 'both' || stage === currentStageName.toLowerCase();
+        return !stage || stage === 'both' || stage === 'all' || stage === currentStageName.toLowerCase();
       });
       
       if (filterWastes.length === 0) return;
@@ -2629,7 +2623,7 @@
         <div>
           <label class="block text-xs font-semibold mb-1 text-gray-600">เฉพาะด่านไหน</label>
           <select id="edit-bin-stage" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
-            <option value="both" ${stageLower === 'both' ? 'selected' : ''}>แสดงทุกด่าน</option>
+            <option value="both" ${stageLower === 'both' || stageLower === 'all' ? 'selected' : ''}>แสดงทุกด่าน</option>
             <option value="indoor" ${stageLower === 'indoor' ? 'selected' : ''}>เฉพาะด่านในอาคารผลิต</option>
             <option value="outdoor" ${stageLower === 'outdoor' ? 'selected' : ''}>เฉพาะด่านนอกอาคารผลิต</option>
           </select>
@@ -2784,7 +2778,7 @@
         <div>
           <label class="block text-xs font-semibold mb-1 text-gray-600">โผล่เฉพาะด่านไหน</label>
           <select id="edit-waste-stage" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
-            <option value="both" ${stageLower === 'both' ? 'selected' : ''}>โผล่ทั้งสองด่าน</option>
+            <option value="both" ${stageLower === 'both' || stageLower === 'all' ? 'selected' : ''}>โผล่ทั้งสองด่าน</option>
             <option value="indoor" ${stageLower === 'indoor' ? 'selected' : ''}>ด่านในอาคารเท่านั้น</option>
             <option value="outdoor" ${stageLower === 'outdoor' ? 'selected' : ''}>ด่านกลางแจ้งเท่านั้น</option>
           </select>
