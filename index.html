@@ -847,10 +847,14 @@
     }
 
     // 1. STATE & STORAGE MANAGEMENT
+    // กำหนดค่าเริ่มต้นสำหรับ Google Sheets URL และ Spreadsheet ID ที่นี่ได้ หากต้องการเชื่อมต่อทันทีโดยไม่ต้องตั้งค่าใหม่ทุกเครื่อง
+    const defaultGasUrl = "https://script.google.com/macros/s/AKfycbwhexLNYoARzPpOttjhlSITdRrlCjeR2eV4VHuW6NUdP2GtAkyarJ-vuUPFidZF5ywq4A/exec";
+    const defaultSheetId = "1HANlw_-7ZxOJ8elq9opmL84jh7TpzFEivhd52HT6jpQ";
+
     let db = {};
     let currentUser = null;
-    let currentSheetId = localStorage.getItem("sheetId") || "";
-    let currentGasUrl = localStorage.getItem("gasUrl") || "";
+    let currentSheetId = localStorage.getItem("sheetId") || defaultSheetId;
+    let currentGasUrl = localStorage.getItem("gasUrl") || defaultGasUrl;
     let activePage = "login";
     let activeAdminTab = "sys";
     let activeLeaderboardTab = "weekly";
@@ -917,6 +921,7 @@
             method: 'POST',
             mode: 'cors',
             credentials: 'omit',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
               action: 'load',
               sheetId: currentSheetId
@@ -965,6 +970,7 @@
             method: 'POST',
             mode: 'cors',
             credentials: 'omit',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
               action: 'save',
               sheetId: currentSheetId,
@@ -2308,6 +2314,7 @@
           method: 'POST',
           mode: 'cors',
           credentials: 'omit',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({
             action: 'init',
             sheetId: sheetId
@@ -3380,6 +3387,7 @@
               method: 'POST',
               mode: 'cors',
               credentials: 'omit',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
               body: JSON.stringify({
                 action: 'fix',
                 sheetId: currentSheetId
@@ -3424,8 +3432,8 @@
       initLandingPage();
       
       // Load local config first
-      currentGasUrl = localStorage.getItem("gasUrl") || "";
-      currentSheetId = localStorage.getItem("sheetId") || "";
+      currentGasUrl = localStorage.getItem("gasUrl") || defaultGasUrl;
+      currentSheetId = localStorage.getItem("sheetId") || defaultSheetId;
       
       // Fetch DB
       await loadFromCloud();
