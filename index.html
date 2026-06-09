@@ -855,6 +855,17 @@
     let currentUser = null;
     let currentSheetId = localStorage.getItem("sheetId") || defaultSheetId;
     let currentGasUrl = localStorage.getItem("gasUrl") || defaultGasUrl;
+
+    function safeParseJSON(str, fallback) {
+      if (!str || typeof str !== 'string' || str.trim() === "") return fallback;
+      try {
+        return JSON.parse(str);
+      } catch (e) {
+        console.error("JSON parse error:", e);
+        return fallback;
+      }
+    }
+
     let activePage = "login";
     let activeAdminTab = "sys";
     let activeLeaderboardTab = "weekly";
@@ -1008,13 +1019,9 @@
       const settingsVal = db.settings || [];
       const cycleSetting = settingsVal.find(s => s.key === 'weekly_cycles');
       if (cycleSetting) {
-        try {
-          const cycles = JSON.parse(cycleSetting.value);
-          const current = cycles.find(c => today >= c.start_date && today <= c.end_date);
-          return current || null;
-        } catch (e) {
-          console.error("Cycles parsing failed", e);
-        }
+        const cycles = safeParseJSON(cycleSetting.value, []);
+        const current = cycles.find(c => today >= c.start_date && today <= c.end_date);
+        return current || null;
       }
       return null;
     }
@@ -1524,13 +1531,9 @@
     function openAnnouncementModal() {
       // Load announcement photos from settings
       const photosSetting = db.settings.find(s => s.key === 'announcements');
-      try {
-        announcementImages = JSON.parse(photosSetting.value) || [];
-      } catch (e) {
-        announcementImages = [
-          "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=800&auto=format&fit=crop"
-        ];
-      }
+      announcementImages = safeParseJSON(photosSetting ? photosSetting.value : "", [
+        "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=800&auto=format&fit=crop"
+      ]);
 
       // Setup Slider
       const track = document.getElementById('announcement-slider-track');
@@ -2118,14 +2121,10 @@
       const cycleSetting = settingsVal.find(s => s.key === 'weekly_cycles');
       
       if (cycleSetting) {
-        try {
-          const cycles = JSON.parse(cycleSetting.value) || [];
-          cycles.forEach(c => {
-            select.innerHTML += `<option value="${c.id}">${c.id} (${c.start_date} ถึง ${c.end_date})</option>`;
-          });
-        } catch (e) {
-          console.error("Cycles listing failed", e);
-        }
+        const cycles = safeParseJSON(cycleSetting.value, []);
+        cycles.forEach(c => {
+          select.innerHTML += `<option value="${c.id}">${c.id} (${c.start_date} ถึง ${c.end_date})</option>`;
+        });
       }
     }
 
@@ -2177,10 +2176,8 @@
         const cycleSetting = settingsVal.find(s => s.key === 'weekly_cycles');
         let weekConfig = null;
         if (cycleSetting) {
-          try {
-            const cycles = JSON.parse(cycleSetting.value);
-            weekConfig = cycles.find(c => c.id === selectedWeekId);
-          } catch(e){}
+          const cycles = safeParseJSON(cycleSetting.value, []);
+          weekConfig = cycles.find(c => c.id === selectedWeekId);
         }
 
         if (weekConfig) {
@@ -2259,10 +2256,8 @@
       if (bgMorningSetting) document.getElementById('admin-bg-morning').value = bgMorningSetting.value;
       if (bgNightSetting) document.getElementById('admin-bg-night').value = bgNightSetting.value;
       if (announcementSetting) {
-        try {
-          const arr = JSON.parse(announcementSetting.value);
-          document.getElementById('admin-announcements').value = arr.join("\n");
-        } catch(e){}
+        const arr = safeParseJSON(announcementSetting.value, []);
+        document.getElementById('admin-announcements').value = arr.join("\n");
       }
       
       // Update logo icon in UI headers
@@ -2941,23 +2936,21 @@
       const settingsVal = db.settings || [];
       const cycleSetting = settingsVal.find(s => s.key === 'weekly_cycles');
       if (cycleSetting) {
-        try {
-          const cycles = JSON.parse(cycleSetting.value) || [];
-          cycles.forEach((c, idx) => {
-            container.innerHTML += `
-              <div class="flex items-center justify-between bg-bg p-3 rounded-xl text-xs">
-                <div>
-                  <p class="font-bold text-dark">สัปดาห์: ${c.id}</p>
-                  <p class="text-[10px] text-gray-500">${c.start_date} ถึง ${c.end_date}</p>
-                </div>
-                <div class="flex items-center">
-                  <button onclick="openEditWeeklyCycleModal('${c.id}')" class="text-blue-500 p-2 mr-2" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
-                  <button onclick="deleteWeeklyCycle('${c.id}')" class="text-red-500 p-2" title="ลบ"><i class="fa-solid fa-trash"></i></button>
-                </div>
+        const cycles = safeParseJSON(cycleSetting.value, []);
+        cycles.forEach((c, idx) => {
+          container.innerHTML += `
+            <div class="flex items-center justify-between bg-bg p-3 rounded-xl text-xs">
+              <div>
+                <p class="font-bold text-dark">สัปดาห์: ${c.id}</p>
+                <p class="text-[10px] text-gray-500">${c.start_date} ถึง ${c.end_date}</p>
               </div>
-            `;
-          });
-        } catch (e){}
+              <div class="flex items-center">
+                <button onclick="openEditWeeklyCycleModal('${c.id}')" class="text-blue-500 p-2 mr-2" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="deleteWeeklyCycle('${c.id}')" class="text-red-500 p-2" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>
+          `;
+        });
       }
     }
 
@@ -2966,10 +2959,7 @@
       const cycleSetting = settingsVal.find(s => s.key === 'weekly_cycles');
       if (!cycleSetting) return;
       
-      let cycles = [];
-      try {
-        cycles = JSON.parse(cycleSetting.value) || [];
-      } catch(e) { return; }
+      let cycles = safeParseJSON(cycleSetting.value, []);
       
       const cycle = cycles.find(c => c.id === cycleId);
       if (!cycle) return;
@@ -2999,7 +2989,7 @@
         
         await syncSave(() => {
           const cSetting = db.settings.find(s => s.key === 'weekly_cycles');
-          let currentCycles = JSON.parse(cSetting.value) || [];
+          let currentCycles = safeParseJSON(cSetting.value, []);
           const match = currentCycles.find(c => c.id === cycleId);
           if (match) {
             match.start_date = start;
@@ -3040,7 +3030,7 @@
         
         await syncSave(() => {
           const cSetting = db.settings.find(s => s.key === 'weekly_cycles');
-          let cycles = JSON.parse(cSetting.value) || [];
+          let cycles = safeParseJSON(cSetting.value, []);
           cycles.push({ id: id, start_date: start, end_date: end });
           cSetting.value = JSON.stringify(cycles);
         });
@@ -3061,7 +3051,7 @@
         if (res.isConfirmed) {
           await syncSave(() => {
             const cSetting = db.settings.find(s => s.key === 'weekly_cycles');
-            let cycles = JSON.parse(cSetting.value) || [];
+            let cycles = safeParseJSON(cSetting.value, []);
             cycles = cycles.filter(c => c.id !== cycleId);
             cSetting.value = JSON.stringify(cycles);
           });
