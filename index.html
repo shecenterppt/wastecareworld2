@@ -963,36 +963,68 @@
       return false;
     }
 
-    // Save state locally and cloud-sync with stale prevention
+    let syncQueuePromise = Promise.resolve();
+
+    // Save state locally and cloud-sync with stale prevention (Optimistic & Background)
     async function syncSave(updaterFunc) {
-      // 1. Pull latest to prevent stale overwrite
-      await loadFromCloud();
-      
-      // 2. Perform updates
+      // 1. Perform local update immediately for instant UI response
       updaterFunc();
-      
-      // 3. Save to Local
       localStorage.setItem("db", JSON.stringify(db));
       
-      // 4. Save to Cloud asynchronously
-      if (currentGasUrl && currentSheetId) {
-        try {
-          await fetch(currentGasUrl, {
-            method: 'POST',
-            mode: 'cors',
-            credentials: 'omit',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-              action: 'save',
-              sheetId: currentSheetId,
-              payload: db
-            })
-          });
-          console.log("Database synced successfully with Google Sheets");
-        } catch (e) {
-          console.error("Cloud write sync failed, saved locally", e);
+      // 2. Chain the cloud sync to the queue so they run sequentially in the background
+      syncQueuePromise = syncQueuePromise.then(async () => {
+        if (currentGasUrl && currentSheetId) {
+          try {
+            // Fetch latest DB from cloud to prevent stale overwrites
+            const response = await fetch(currentGasUrl, {
+              method: 'POST',
+              mode: 'cors',
+              credentials: 'omit',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                action: 'load',
+                sheetId: currentSheetId
+              })
+            });
+            const result = await response.json();
+            if (result && result.db) {
+              // Update local state with fresh cloud copy
+              db = result.db;
+              
+              // Apply updates on top of the fresh database
+              updaterFunc();
+              localStorage.setItem("db", JSON.stringify(db));
+            }
+            
+            // Push updated database to cloud
+            await fetch(currentGasUrl, {
+              method: 'POST',
+              mode: 'cors',
+              credentials: 'omit',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                action: 'save',
+                sheetId: currentSheetId,
+                payload: db
+              })
+            });
+            console.log("Database synced and reconciled successfully in background");
+            
+            // Silent UI update to show any new background changes
+            if (activePage === 'dashboard') {
+              updateDashboardView();
+            } else if (activePage === 'checkin') {
+              renderStreakUI();
+            } else if (activePage === 'leaderboard') {
+              renderLeaderboard();
+            } else if (activePage === 'admin') {
+              renderAdminDashboard();
+            }
+          } catch (e) {
+            console.error("Background cloud sync failed", e);
+          }
         }
-      }
+      });
     }
 
     // Helper to get Date string YYYY-MM-DD
@@ -1777,8 +1809,11 @@
       dock.innerHTML = "";
       
       const bins = db.bins || [];
-      // Filter bins suitable for current stage
-      const filterBins = bins.filter(b => !b.stage || b.stage === 'both' || b.stage === currentStageName);
+      // Filter bins suitable for current stage (case-insensitive)
+      const filterBins = bins.filter(b => {
+        const stage = (b.stage || '').trim().toLowerCase();
+        return !stage || stage === 'both' || stage === currentStageName.toLowerCase();
+      });
       
       filterBins.forEach(bin => {
         dock.innerHTML += `
@@ -1794,9 +1829,12 @@
       const canvas = document.getElementById('game-canvas');
       canvas.innerHTML = ""; // Clear existing
 
-      // Filter wastes suitable for current stage
+      // Filter wastes suitable for current stage (case-insensitive)
       const allWastes = db.wastes || [];
-      const filterWastes = allWastes.filter(w => w.stage === 'both' || w.stage === currentStageName);
+      const filterWastes = allWastes.filter(w => {
+        const stage = (w.stage || '').trim().toLowerCase();
+        return !stage || stage === 'both' || stage === currentStageName.toLowerCase();
+      });
       
       if (filterWastes.length === 0) return;
 
@@ -2500,7 +2538,8 @@
       list.innerHTML = "";
       const bins = db.bins || [];
       bins.forEach(bin => {
-        const stageText = bin.stage === 'indoor' ? 'ในอาคาร' : bin.stage === 'outdoor' ? 'นอกอาคาร' : 'ทุกด่าน';
+        const stageLower = (bin.stage || '').trim().toLowerCase();
+        const stageText = stageLower === 'indoor' ? 'ในอาคาร' : stageLower === 'outdoor' ? 'นอกอาคาร' : 'ทุกด่าน';
         list.innerHTML += `
           <tr class="border-b text-xs">
             <td class="p-2 font-mono">${bin.bin_id}</td>
@@ -2568,6 +2607,7 @@
       const bin = db.bins.find(b => b.bin_id === binId);
       if (!bin) return;
       
+      const stageLower = (bin.stage || '').trim().toLowerCase();
       const fields = document.getElementById('admin-editor-fields');
       fields.innerHTML = `
         <div>
@@ -2589,9 +2629,9 @@
         <div>
           <label class="block text-xs font-semibold mb-1 text-gray-600">เฉพาะด่านไหน</label>
           <select id="edit-bin-stage" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
-            <option value="both" ${bin.stage === 'both' ? 'selected' : ''}>แสดงทุกด่าน</option>
-            <option value="indoor" ${bin.stage === 'indoor' ? 'selected' : ''}>เฉพาะด่านในอาคารผลิต</option>
-            <option value="outdoor" ${bin.stage === 'outdoor' ? 'selected' : ''}>เฉพาะด่านนอกอาคารผลิต</option>
+            <option value="both" ${stageLower === 'both' ? 'selected' : ''}>แสดงทุกด่าน</option>
+            <option value="indoor" ${stageLower === 'indoor' ? 'selected' : ''}>เฉพาะด่านในอาคารผลิต</option>
+            <option value="outdoor" ${stageLower === 'outdoor' ? 'selected' : ''}>เฉพาะด่านนอกอาคารผลิต</option>
           </select>
         </div>
       `;
@@ -2714,6 +2754,7 @@
       const waste = db.wastes.find(w => w.waste_id === wasteId);
       if (!waste) return;
       
+      const stageLower = (waste.stage || '').trim().toLowerCase();
       const fields = document.getElementById('admin-editor-fields');
       let binOptions = "";
       db.bins.forEach(b => {
@@ -2743,9 +2784,9 @@
         <div>
           <label class="block text-xs font-semibold mb-1 text-gray-600">โผล่เฉพาะด่านไหน</label>
           <select id="edit-waste-stage" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
-            <option value="both" ${waste.stage === 'both' ? 'selected' : ''}>โผล่ทั้งสองด่าน</option>
-            <option value="indoor" ${waste.stage === 'indoor' ? 'selected' : ''}>ด่านในอาคารเท่านั้น</option>
-            <option value="outdoor" ${waste.stage === 'outdoor' ? 'selected' : ''}>ด่านกลางแจ้งเท่านั้น</option>
+            <option value="both" ${stageLower === 'both' ? 'selected' : ''}>โผล่ทั้งสองด่าน</option>
+            <option value="indoor" ${stageLower === 'indoor' ? 'selected' : ''}>ด่านในอาคารเท่านั้น</option>
+            <option value="outdoor" ${stageLower === 'outdoor' ? 'selected' : ''}>ด่านกลางแจ้งเท่านั้น</option>
           </select>
         </div>
       `;
