@@ -1,0 +1,3439 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Waste Care World</title>
+  <meta name="description" content="แอปพลิเคชันคัดแยกขยะ สะสมแต้มรักษ์โลก และกิจกรรมรักษ์สิ่งแวดล้อม">
+  
+  <!-- Google Font: Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#5C8D67',
+            secondary: '#A5C7A9',
+            accent: '#F4B95F',
+            dark: '#253E2B',
+            bg: '#F2F7F4',
+          },
+          fontFamily: {
+            prompt: ['Prompt', 'sans-serif'],
+          },
+          boxShadow: {
+            'premium': '0 10px 30px -5px rgba(92, 141, 103, 0.15), 0 5px 15px -3px rgba(37, 62, 43, 0.05)',
+            'inner-soft': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- html5-qrcode Library -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: transparent;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: rgba(242, 247, 254, 0.7); /* soft translucent screen overlay */
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Bottom Slide-up Modal Styles */
+    .bottom-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      width: 100%;
+      max-width: 448px;
+      background: white;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+      z-index: 100;
+      transform: translate(-50%, 100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @media (min-width: 768px) {
+      .bottom-sheet {
+        max-width: 600px;
+      }
+    }
+    .bottom-sheet.open {
+      transform: translate(-50%, 0);
+    }
+    .bottom-sheet-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(37, 62, 43, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 90;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .bottom-sheet-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Wave effect animation */
+    .wave-bg {
+      position: relative;
+      background: rgba(37, 62, 43, 0.4);
+      overflow: hidden;
+    }
+    .wave-bg::after {
+      content: "";
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      background: rgba(255,255,255,0.03);
+      top: -150%;
+      left: -50%;
+      border-radius: 40%;
+      animation: wave 15s infinite linear;
+      pointer-events: none;
+    }
+    @keyframes wave {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Floating Score Text in Game */
+    .floating-score {
+      position: absolute;
+      font-size: 1.5rem;
+      font-weight: 700;
+      pointer-events: none;
+      animation: floatUp 0.8s ease-out forwards;
+      z-index: 1000;
+    }
+    @keyframes floatUp {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-80px) scale(1.2);
+      }
+    }
+
+    /* Fade slide animation */
+    .slide-in {
+      animation: slideIn 0.5s ease forwards;
+    }
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen text-dark bg-slate-900">
+  <!-- Global Fixed Background -->
+  <div id="global-bg" class="fixed inset-0 -z-50 bg-cover bg-center transition-all duration-1000 bg-no-repeat"></div>
+
+  <!-- Centered App Wrapper (Responsive: max-w-md on mobile, full-screen on desktop) -->
+  <div class="flex-grow w-full max-w-md mx-auto md:max-w-none md:mx-0 flex flex-col min-h-screen relative bg-transparent shadow-2xl md:shadow-none border-x border-secondary/10 md:border-x-0">
+
+    <!-- ==================== DYNAMIC HEADER ==================== -->
+    <header id="app-header" class="hidden bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-secondary/20 shadow-sm px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <img id="header-logo" src="https://img.icons8.com/dusk/64/recycle-sign.png" alt="Logo" class="w-8 h-8 object-contain">
+        <span class="font-bold text-lg text-primary tracking-wide">Waste Care World</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- Admin Badge -->
+        <button id="admin-badge" onclick="switchPage('admin')" class="hidden bg-red-100 hover:bg-red-200 text-red-700 text-xs px-2.5 py-1 rounded-full font-semibold border border-red-200 transition">Admin Center</button>
+        <!-- Refresh Button -->
+        <button onclick="handleRefresh()" class="w-9 h-9 rounded-full bg-green-50 text-primary hover:bg-green-100 flex items-center justify-center transition shadow-sm border border-green-100" title="รีเฟรชข้อมูล">
+          <i class="fa-solid fa-rotate text-sm"></i>
+        </button>
+        <!-- Logout Button -->
+        <button onclick="handleLogout()" class="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition shadow-sm border border-red-100">
+          <i class="fa-solid fa-power-off text-sm"></i>
+        </button>
+      </div>
+    </header>
+
+  <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
+  <main class="flex-grow flex flex-col pb-20">
+    
+    <!-- 1. LANDING & LOGIN PAGE -->
+    <section id="page-login" class="flex-grow flex flex-col justify-between wave-bg text-white p-6 relative">
+      <!-- Time-based Sky Overlay -->
+      <div id="sky-overlay" class="absolute inset-0 transition-all duration-1000 pointer-events-none opacity-40 bg-gradient-to-b from-blue-400 to-transparent"></div>
+      
+      <!-- Welcome/Branding Area -->
+      <div class="z-10 mt-8 text-center">
+        <img id="login-logo" src="https://img.icons8.com/dusk/128/recycle-sign.png" alt="Logo" class="w-24 h-24 mx-auto object-contain drop-shadow-lg mb-4 animate-bounce">
+        <h1 class="text-3xl font-extrabold tracking-tight">Waste Care World</h1>
+        <p class="text-secondary/90 text-sm mt-1">คัดแยกขยะอย่างสร้างสรรค์ เพื่อโลกที่ยั่งยืน</p>
+      </div>
+
+      <!-- Welcome Slider (Quotes) -->
+      <div class="z-10 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 text-center my-6">
+        <p id="quote-text" class="text-sm font-medium transition-opacity duration-500 opacity-100">"แยกขยะวันนี้ เพื่อสร้างอนาคตที่ดีให้ลูกหลาน"</p>
+      </div>
+
+      <!-- Login Form Card -->
+      <form onsubmit="event.preventDefault(); submitLogin();" class="z-10 bg-white text-dark rounded-3xl p-6 shadow-2xl border border-white/20 slide-in">
+        <h2 class="text-xl font-bold mb-1 text-primary">เข้าสู่ระบบ</h2>
+        <p class="text-gray-500 text-xs mb-4">เข้าใช้งานด้วยรหัสพนักงานของคุณ</p>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1.5" for="login-empid">รหัสพนักงาน (Emp ID)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                <i class="fa-solid fa-id-card"></i>
+              </span>
+              <input id="login-empid" type="tel" maxlength="8" placeholder="ระบุตัวเลขหรือ admin123" class="w-full pl-10 pr-4 py-3 bg-bg rounded-xl border-2 border-transparent focus:border-primary focus:bg-white outline-none transition text-sm">
+            </div>
+          </div>
+          <button type="submit" class="w-full py-3.5 bg-primary hover:bg-dark text-white rounded-xl font-semibold text-sm transition shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+            <span>เข้าสู่ระบบ</span>
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 2. DASHBOARD PAGE -->
+    <section id="page-dashboard" class="hidden p-4 flex flex-col justify-between flex-grow min-h-[calc(100vh-140px)] slide-in">
+      <!-- User Profile Card (Stretched vertically with flex-grow to display background image fully) -->
+      <div id="user-profile-card" class="rounded-3xl p-6 text-white shadow-premium relative overflow-hidden transition-all duration-500 bg-cover bg-center min-h-[260px] flex flex-col justify-between flex-grow mb-4" style="background-image: url('https://images.unsplash.com/photo-1463936575829-25148e1db1b8?q=80&w=600&auto=format&fit=crop');">
+        <!-- Overlay -->
+        <div class="absolute inset-0 bg-dark/60 backdrop-blur-[2px]"></div>
+        
+        <div class="relative z-10 flex justify-between items-start w-full">
+          <div>
+            <p class="text-xs uppercase tracking-wider text-secondary">Eco Care Guardian</p>
+            <h2 id="dashboard-nickname" class="text-2xl font-bold mt-1">-</h2>
+            <p id="dashboard-empid" class="text-xs text-secondary/80 mt-0.5">Emp ID: -</p>
+          </div>
+          <div class="flex flex-col items-end gap-2">
+            <div class="bg-white/20 backdrop-blur-md rounded-full px-3 py-1 flex items-center gap-1 border border-white/10">
+              <span class="text-xs font-semibold" id="dashboard-level-name">Seedling</span>
+            </div>
+            <!-- Level Avatar Image (Enlarged) -->
+            <img id="dashboard-level-img" src="https://images.unsplash.com/photo-1463936575829-25148e1db1b8?q=80&w=600&auto=format&fit=crop" class="w-20 h-20 rounded-full border-2 border-white/50 shadow-md object-cover bg-white/10" alt="Level Avatar">
+          </div>
+        </div>
+
+        <!-- Leaf point tracker -->
+        <div class="relative z-10 mt-6 flex items-baseline gap-2">
+          <span id="dashboard-points" class="text-5xl font-extrabold tracking-tight">0</span>
+          <span class="text-lg text-secondary flex items-center gap-1 font-medium">
+            <i class="fa-solid fa-leaf text-accent animate-pulse"></i> ใบไม้
+          </span>
+        </div>
+
+        <!-- Level progress -->
+        <div class="relative z-10 mt-4 space-y-1">
+          <div class="flex justify-between text-xs text-secondary/90">
+            <span>คะแนนปัจจุบัน</span>
+            <span id="dashboard-level-pts">0 / 200 แต้ม</span>
+          </div>
+          <div class="w-full bg-white/20 h-2.5 rounded-full overflow-hidden">
+            <div id="dashboard-progress" class="bg-accent h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Content Wrapper -->
+      <div class="space-y-4 mt-auto">
+        <!-- Quick Actions Grid -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Daily Streak Box -->
+          <div onclick="switchPage('checkin')" class="bg-white p-4 rounded-2xl border border-secondary/20 shadow-premium flex items-center gap-3 active:scale-95 transition cursor-pointer">
+            <div class="w-10 h-10 rounded-xl bg-green-50 text-primary flex items-center justify-center text-lg">
+              <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <div>
+              <h3 class="text-xs font-semibold text-gray-500">เช็คอินสะสมวัน</h3>
+              <p id="dashboard-streak" class="text-sm font-bold text-dark">0 วันต่อเนื่อง</p>
+            </div>
+          </div>
+          
+          <!-- Game Play Box -->
+          <div onclick="switchPage('game')" class="bg-white p-4 rounded-2xl border border-secondary/20 shadow-premium flex items-center gap-3 active:scale-95 transition cursor-pointer">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 text-accent flex items-center justify-center text-lg">
+              <i class="fa-solid fa-gamepad"></i>
+            </div>
+            <div>
+              <h3 class="text-xs font-semibold text-gray-500">โควต้าคัดแยกขยะ</h3>
+              <p id="dashboard-quota" class="text-sm font-bold text-dark">เหลือ 2 ครั้ง/สัปดาห์</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Eco Tip Card -->
+        <div class="bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-2xl p-4 flex gap-3 items-start">
+          <span class="text-primary text-xl mt-0.5"><i class="fa-solid fa-circle-info"></i></span>
+          <div class="space-y-0.5">
+            <h4 class="text-xs font-bold text-primary">Eco Tip วันนี้:</h4>
+            <p class="text-xs text-dark/80 leading-relaxed">กระดาษลังเคลือบสารแวกซ์หรือกระดาษชำระใช้แล้ว ไม่ควรทิ้งในถังรีไซเคิล ควรแยกทิ้งลงถังขยะทั่วไป!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. CHECK-IN SECTION -->
+    <section id="page-checkin" class="hidden p-4 space-y-4 slide-in">
+      <div class="bg-white rounded-3xl p-6 border border-secondary/20 shadow-premium text-center space-y-4">
+        <div class="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+          <i class="fa-solid fa-calendar-days"></i>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold">เช็คอินรับใบไม้ประจำวัน</h2>
+          <p class="text-xs text-gray-500 mt-1">รับคะแนนโบนัสสะสมใบไม้เพิ่มขึ้นเมื่อเช็คอินติดต่อกันทุกวัน!</p>
+        </div>
+
+        <!-- 7-Day Streak UI -->
+        <div class="grid grid-cols-4 gap-2 pt-2" id="streak-grid">
+          <!-- Dynamically populated -->
+        </div>
+
+        <button id="btn-trigger-checkin" onclick="openAnnouncementModal()" class="w-full py-3.5 bg-primary hover:bg-dark text-white rounded-xl font-semibold text-sm transition shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check-double"></i>
+          <span>เช็คอินวันนี้</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 4. SORTING GAME SECTION -->
+    <section id="page-game" class="hidden flex-grow flex flex-col justify-between p-4 space-y-4 slide-in">
+      <!-- Game Lobby -->
+      <div id="game-lobby" class="bg-white rounded-3xl p-6 border border-secondary/20 shadow-premium text-center space-y-4 my-auto">
+        <div class="w-20 h-20 bg-accent/10 text-accent rounded-full flex items-center justify-center text-4xl mx-auto">
+          <i class="fa-solid fa-recycle"></i>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold">เกมคัดแยกขยะรักษ์โลก</h2>
+          <p class="text-xs text-gray-500 mt-1">แยกประเภทขยะให้ถูกต้อง รวดเร็ว และลุ้นรางวัล</p>
+        </div>
+        <div class="bg-bg rounded-xl p-3.5 space-y-1.5 text-left text-xs text-gray-600">
+          <div class="flex justify-between">
+            <span>กติกา:</span>
+            <span class="font-semibold text-dark">ลากขยะลงถังให้ถูกต้อง</span>
+          </div>
+          <div class="flex justify-between">
+            <span>แยกถูก / ผิด:</span>
+            <span class="font-semibold text-dark text-primary">+50 / -10 แต้ม</span>
+          </div>
+          <div class="flex justify-between">
+            <span>ด่าน (Indoor/Outdoor):</span>
+            <span class="font-semibold text-dark">ด่านละ 2 นาที</span>
+          </div>
+          <div class="flex justify-between">
+            <span>โควต้าสัปดาห์ปัจจุบัน:</span>
+            <span id="game-lobby-quota" class="font-bold text-primary">เหลือ 2 ครั้ง</span>
+          </div>
+        </div>
+        <button id="btn-start-game" onclick="startGameFlow()" class="w-full py-3.5 bg-primary hover:bg-dark text-white rounded-xl font-semibold text-sm transition shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-circle-play"></i>
+          <span>เริ่มเล่นเกมคัดแยกขยะ</span>
+        </button>
+      </div>
+
+      <!-- Game Active Screen -->
+      <div id="game-active" class="hidden flex-grow flex flex-col justify-between relative overflow-hidden select-none touch-none bg-slate-900 rounded-3xl border border-white/10" style="touch-action: none;">
+        <!-- Header HUD -->
+        <div class="p-3 bg-black/40 backdrop-blur-md flex justify-between items-center text-white z-20">
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs text-gray-400">ด่าน:</span>
+            <span id="game-stage-indicator" class="text-xs font-semibold bg-primary/20 border border-primary/40 px-2 py-0.5 rounded">ในอาคาร</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-center">
+              <p class="text-[10px] text-gray-400">คะแนน</p>
+              <p id="game-score" class="text-lg font-bold text-accent">0</p>
+            </div>
+            <div class="text-center">
+              <p class="text-[10px] text-gray-400">เวลา</p>
+              <p id="game-timer" class="text-lg font-bold text-white">02:00</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Waste Spawner / Canvas Area -->
+        <div id="game-canvas" class="flex-grow relative overflow-hidden bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1000&auto=format&fit=crop');">
+          <!-- Overlay to darken background -->
+          <div class="absolute inset-0 bg-black/20"></div>
+          
+          <!-- Wastes will be dynamically placed inside here -->
+        </div>
+
+        <!-- Bins Dock (Bottom of Canvas) -->
+        <div id="game-bins-dock" class="p-3 bg-black/40 backdrop-blur-md border-t border-white/10 flex justify-around items-end gap-1.5 overflow-visible z-20">
+          <!-- Bins will be dynamically sized and rendered here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. QR CODE SCANNER SECTION -->
+    <section id="page-scanner" class="hidden p-4 space-y-4 slide-in">
+      <div class="bg-white rounded-3xl p-6 border border-secondary/20 shadow-premium text-center space-y-4">
+        <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+          <i class="fa-solid fa-qrcode"></i>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold">สแกน QR Code รับแต้ม</h2>
+          <p class="text-xs text-gray-500 mt-1">สแกนรหัสแคมเปญต่างๆ เพื่อรับแต้มรางวัลสะสมใบไม้</p>
+        </div>
+
+        <!-- Scanner Container -->
+        <div class="relative w-full aspect-square max-w-[320px] mx-auto overflow-hidden rounded-2xl bg-black border-4 border-primary/20 shadow-inner flex items-center justify-center">
+          <div id="reader" class="w-full h-full"></div>
+          <div id="scanner-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
+            <i class="fa-solid fa-camera text-4xl mb-2 text-primary"></i>
+            <span class="text-xs text-gray-400">กดปุ่มด้านล่างเพื่อเปิดกล้องสแกน</span>
+          </div>
+        </div>
+
+        <button id="btn-toggle-camera" onclick="toggleScanner()" class="w-full py-3.5 bg-primary hover:bg-dark text-white rounded-xl font-semibold text-sm transition shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-camera-rotate"></i>
+          <span>เปิดกล้องสแกน QR</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 6. LEADERBOARD SECTION -->
+    <section id="page-leaderboard" class="hidden flex-grow flex flex-col slide-in">
+      <!-- Sticky Rank Banner -->
+      <div id="sticky-rank-banner" class="bg-primary/95 text-white py-3 px-4 shadow-md sticky top-[61px] z-30 flex justify-between items-center backdrop-blur-sm">
+        <div class="flex items-center gap-2.5">
+          <span id="sticky-user-rank" class="w-7 h-7 rounded-full bg-accent text-dark flex items-center justify-center font-bold text-sm">#--</span>
+          <div>
+            <p id="sticky-user-name" class="font-bold text-sm">-</p>
+            <p class="text-[10px] text-secondary/80">อันดับของคุณ</p>
+          </div>
+        </div>
+        <p class="font-extrabold text-sm text-accent" id="sticky-user-points">0 ใบไม้</p>
+      </div>
+
+      <div class="p-4 space-y-4">
+        <!-- Tabs & Dropdown Header -->
+        <div class="flex justify-between items-center gap-2 bg-white p-1 rounded-xl border border-secondary/20 shadow-sm">
+          <button onclick="toggleLeaderboardTab('weekly')" id="btn-tab-weekly" class="flex-grow py-2 text-xs font-bold rounded-lg bg-primary text-white transition">รายสัปดาห์</button>
+          <button onclick="toggleLeaderboardTab('alltime')" id="btn-tab-alltime" class="flex-grow py-2 text-xs font-bold rounded-lg text-gray-500 transition">ทั้งหมด</button>
+        </div>
+
+        <!-- Weekly Selector (Only visible for Weekly Leaderboard) -->
+        <div id="leaderboard-weekly-filter" class="space-y-1">
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">เลือกสัปดาห์</label>
+          <select id="leaderboard-week-select" onchange="renderLeaderboard()" class="w-full p-2.5 bg-white rounded-xl border border-secondary/20 outline-none text-xs font-semibold text-dark shadow-sm">
+            <!-- Weekly cycles dynamically loaded -->
+          </select>
+        </div>
+
+        <!-- Leaderboard Table Container -->
+        <div class="bg-white rounded-3xl border border-secondary/20 overflow-hidden shadow-premium">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-bg text-[10px] font-bold text-gray-600 uppercase tracking-wider border-b border-secondary/20">
+                <th class="p-3 w-16 text-center">อันดับ</th>
+                <th class="p-3">ผู้เล่น</th>
+                <th class="p-3 text-right">แต้มสะสม</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-list">
+              <!-- Rendered Dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. ADMIN CENTER SECTION -->
+    <section id="page-admin" class="hidden p-4 space-y-4 slide-in">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-bold text-primary flex items-center gap-2">
+          <i class="fa-solid fa-screwdriver-wrench"></i>
+          <span>แผงควบคุมระบบ (Admin)</span>
+        </h2>
+      </div>
+
+      <!-- Admin Tab Navigation -->
+      <div class="flex gap-1 overflow-x-auto pb-1 scrollbar-thin">
+        <button onclick="switchAdminTab('sys')" id="adm-tab-sys" class="px-4 py-2 text-xs font-bold rounded-lg bg-primary text-white whitespace-nowrap">1. ระบบ/รูปภาพ</button>
+        <button onclick="switchAdminTab('level')" id="adm-tab-level" class="px-4 py-2 text-xs font-bold rounded-lg text-gray-500 bg-white whitespace-nowrap border border-secondary/10">2. ระดับ</button>
+        <button onclick="switchAdminTab('game')" id="adm-tab-game" class="px-4 py-2 text-xs font-bold rounded-lg text-gray-500 bg-white whitespace-nowrap border border-secondary/10">3. คัดแยกขยะ</button>
+        <button onclick="switchAdminTab('qr')" id="adm-tab-qr" class="px-4 py-2 text-xs font-bold rounded-lg text-gray-500 bg-white whitespace-nowrap border border-secondary/10">4. แคมเปญ/สัปดาห์</button>
+        <button onclick="switchAdminTab('user')" id="adm-tab-user" class="px-4 py-2 text-xs font-bold rounded-lg text-gray-500 bg-white whitespace-nowrap border border-secondary/10">5. รายชื่อผู้เล่น</button>
+      </div>
+
+      <!-- ADMIN SUB-TABS CONTENT -->
+
+      <!-- TAB 1: SYSTEM & IMAGES -->
+      <div id="admin-panel-sys" class="space-y-4">
+        <div class="bg-white p-5 rounded-2xl border border-secondary/20 shadow-premium space-y-4">
+          <h3 class="text-sm font-bold border-b pb-2 text-primary"><i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> เชื่อมต่อ Google Sheets (GAS Backend)</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold mb-1 text-gray-600">GAS Web App URL</label>
+              <input id="admin-gas-url" type="text" placeholder="https://script.google.com/macros/s/..." class="w-full p-2.5 bg-bg rounded-xl border-transparent focus:border-primary outline-none text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1 text-gray-600">Spreadsheet ID</label>
+              <input id="admin-sheet-id" type="text" placeholder="1aBcdEfGh..." class="w-full p-2.5 bg-bg rounded-xl border-transparent focus:border-primary outline-none text-xs">
+            </div>
+            <div class="flex gap-2 pt-2">
+              <button onclick="testGASConnection()" class="flex-grow py-2.5 bg-primary hover:bg-dark text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-circle-check"></i> ทดสอบเชื่อมต่อ & บันทึก
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-secondary/20 shadow-premium space-y-4">
+          <h3 class="text-sm font-bold border-b pb-2 text-primary"><i class="fa-solid fa-image mr-1.5"></i> ตั้งค่ารูปภาพระบบ</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold mb-1 text-gray-600">URL โลโก้</label>
+              <input id="admin-logo-url" type="text" class="w-full p-2.5 bg-bg rounded-xl border-transparent focus:border-primary outline-none text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1 text-gray-600">URL พื้นหลัง (เช้า)</label>
+              <input id="admin-bg-morning" type="text" class="w-full p-2.5 bg-bg rounded-xl border-transparent focus:border-primary outline-none text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1 text-gray-600">URL พื้นหลัง (ค่ำ)</label>
+              <input id="admin-bg-night" type="text" class="w-full p-2.5 bg-bg rounded-xl border-transparent focus:border-primary outline-none text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1 text-gray-600">URL รูปภาพประกาศ/ข่าวสาร (หลายลิงก์คั่นด้วยขึ้นบรรทัดใหม่)</label>
+              <textarea id="admin-announcements" rows="3" class="w-full p-2.5 bg-bg rounded-xl border-transparent focus:border-primary outline-none text-xs leading-normal"></textarea>
+            </div>
+            <button onclick="saveAdminSystemImages()" class="w-full py-2.5 bg-primary hover:bg-dark text-white rounded-xl font-bold text-xs transition">บันทึกรูปภาพ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: LEVEL CONFIG -->
+      <div id="admin-panel-level" class="hidden space-y-4">
+        <div class="bg-white p-5 rounded-2xl border border-secondary/20 shadow-premium space-y-4">
+          <h3 class="text-sm font-bold border-b pb-2 text-primary"><i class="fa-solid fa-ranking-star mr-1.5"></i> กำหนดระดับผู้เล่น (Levels)</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-bg text-gray-600 font-bold border-b">
+                  <th class="p-2">Level ID</th>
+                  <th class="p-2">ชื่อระดับ</th>
+                  <th class="p-2">คะแนนขั้นต่ำ</th>
+                  <th class="p-2">สีการ์ด (Hex)</th>
+                  <th class="p-2 text-center">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="admin-level-list">
+                <!-- Level rows populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+          <button onclick="openAddLevelModal()" class="w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl font-bold text-xs transition">+ เพิ่มระดับผู้เล่นใหม่</button>
+        </div>
+      </div>
+
+      <!-- TAB 3: GAME EDIT & CSV -->
+      <div id="admin-panel-game" class="hidden space-y-4">
+        <!-- Bins Management -->
+        <div class="bg-white p-5 rounded-2xl border border-secondary/20 shadow-premium space-y-3">
+          <div class="flex justify-between items-center border-b pb-2">
+            <h3 class="text-sm font-bold text-primary"><i class="fa-solid fa-trash-can mr-1.5"></i> จัดการถังขยะ (Bins)</h3>
+            <div class="flex gap-2">
+              <button onclick="exportBinsCSV()" class="px-2.5 py-1 bg-amber-50 text-accent rounded border border-accent/20 font-semibold text-[10px]">Export CSV</button>
+              <button onclick="triggerBinsCSVImport()" class="px-2.5 py-1 bg-green-50 text-primary rounded border border-primary/20 font-semibold text-[10px]">Import CSV</button>
+              <input type="file" id="csv-bins-import-file" accept=".csv" onchange="importBinsCSV(event)" class="hidden">
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-bg text-gray-600 font-bold border-b">
+                  <th class="p-2">ID</th>
+                  <th class="p-2">ชื่อถัง</th>
+                  <th class="p-2">สี</th>
+                  <th class="p-2">ด่าน</th>
+                  <th class="p-2 text-center">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="admin-bins-list">
+                <!-- Bins rows dynamically loaded -->
+              </tbody>
+            </table>
+          </div>
+          <button onclick="openAddBinModal()" class="w-full py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs transition">+ เพิ่มถังขยะ</button>
+        </div>
+
+        <!-- Wastes Management -->
+        <div class="bg-white p-5 rounded-2xl border border-secondary/20 shadow-premium space-y-3">
+          <div class="flex justify-between items-center border-b pb-2">
+            <h3 class="text-sm font-bold text-primary"><i class="fa-solid fa-apple-whole mr-1.5"></i> จัดการรายการขยะ (Wastes)</h3>
+            <div class="flex gap-2">
+              <button onclick="exportWastesCSV()" class="px-2.5 py-1 bg-amber-50 text-accent rounded border border-accent/20 font-semibold text-[10px]">Export CSV</button>
+              <button onclick="triggerCSVImport()" class="px-2.5 py-1 bg-green-50 text-primary rounded border border-primary/20 font-semibold text-[10px]">Import CSV</button>
+              <input type="file" id="csv-import-file" accept=".csv" onchange="importWastesCSV(event)" class="hidden">
+            </div>
+          </div>
+          <div class="overflow-y-auto max-h-[350px]">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-bg text-gray-600 font-bold border-b">
+                  <th class="p-2">ชื่อขยะ</th>
+                  <th class="p-2">ถังที่รองรับ</th>
+                  <th class="p-2">ด่าน</th>
+                  <th class="p-2 text-center">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="admin-wastes-list">
+                <!-- Wastes rows dynamically loaded -->
+              </tbody>
+            </table>
+          </div>
+          <button onclick="openAddWasteModal()" class="w-full py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs transition">+ เพิ่มขยะใหม่</button>
+        </div>
+      </div>
+
+      <!-- TAB 4: QR CAMPAIGNS & WEEKLY CYCLE -->
+      <div id="admin-panel-qr" class="hidden space-y-4">
+        <!-- Weekly Cycle Setup -->
+        <div class="bg-white p-5 rounded-2xl border border-secondary/20 shadow-premium space-y-3">
+          <h3 class="text-sm font-bold border-b pb-2 text-primary"><i class="fa-solid fa-clock-rotate-left mr-1.5"></i> ตั้งค่ารอบสัปดาห์ของระบบ</h3>
+          <div class="space-y-3">
+            <div id="weekly-cycles-admin-list" class="space-y-2">
+              <!-- Render cycles -->
+            </div>
+            <button onclick="openAddWeeklyCycleModal()" class="w-full py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs transition">+ เพิ่มรอบสัปดาห์</button>
+          </div>
+        </div>
+
+        <!-- QR Campaigns Setup -->
+        <div class="bg-white p-5 rounded-2xl border border-secondary/20 shadow-premium space-y-3">
+          <h3 class="text-sm font-bold border-b pb-2 text-primary"><i class="fa-solid fa-qrcode mr-1.5"></i> ตั้งค่าแคมเปญ QR โบนัสแต้ม</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-bg text-gray-600 font-bold border-b">
+                  <th class="p-2">แคมเปญ</th>
+                  <th class="p-2">คะแนน</th>
+                  <th class="p-2">ประเภท</th>
+                  <th class="p-2">หมดอายุ</th>
+                  <th class="p-2 text-center">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="admin-qrs-list">
+                <!-- QR lists dynamic -->
+              </tbody>
+            </table>
+          </div>
+          <button onclick="openAddQRModal()" class="w-full py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs transition">+ สร้าง QR Code แจกแต้ม</button>
+        </div>
+      </div>
+
+      <!-- TAB 5: USER DIRECTORY -->
+      <div id="admin-panel-user" class="hidden space-y-4">
+        <div class="bg-white p-5 rounded-2xl border border-secondary/20 shadow-premium space-y-4">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-bold text-primary"><i class="fa-solid fa-users mr-1.5"></i> รายชื่อผู้เล่นทั้งหมด</h3>
+            <button onclick="runGASCleanUpData()" class="px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 border border-red-200 rounded-xl font-bold text-[10px] transition">
+              <i class="fa-solid fa-recycle mr-1"></i> ล้างและจัดระเบียบข้อมูล (GAS)
+            </button>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 text-xs">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </span>
+            <input id="admin-user-search" oninput="adminSearchUsers()" type="text" placeholder="ค้นหารหัสพนักงาน หรือชื่อเล่น..." class="w-full pl-9 pr-4 py-2 bg-bg rounded-xl border border-transparent focus:border-primary outline-none text-xs">
+          </div>
+
+          <!-- Users List Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-bg text-gray-600 font-bold border-b">
+                  <th class="p-2">รหัสพนักงาน</th>
+                  <th class="p-2">ชื่อเล่น</th>
+                  <th class="p-2">คะแนน</th>
+                  <th class="p-2">เช็คอิน (วัน)</th>
+                  <th class="p-2 text-center">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-list">
+                <!-- User lists with edit, delete, etc. -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination UI -->
+          <div class="flex justify-between items-center text-xs pt-2">
+            <button id="admin-btn-prev-page" onclick="adminChangePage(-1)" class="px-3 py-1.5 bg-bg border rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-50">ก่อนหน้า</button>
+            <span id="admin-page-indicator">หน้า 1 / 1</span>
+            <button id="admin-btn-next-page" onclick="adminChangePage(1)" class="px-3 py-1.5 bg-bg border rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-50">ถัดไป</button>
+          </div>
+
+          <div class="border-t pt-4">
+            <button onclick="adminDeleteAllUsers()" class="w-full py-2.5 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-xl font-bold text-xs transition">
+              <i class="fa-solid fa-trash-can mr-1"></i> ลบผู้เล่นทั้งหมดในเครื่อง (ยกเว้น Admin)
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== BOTTOM SHEETS (MODALS) ==================== -->
+  
+  <!-- SHEET OVERLAY -->
+  <div id="bottom-sheet-overlay" class="bottom-sheet-overlay" onclick="closeAllSheets()"></div>
+
+  <!-- 1. REGISTER MODAL SHEET -->
+  <form onsubmit="event.preventDefault(); submitRegister();" id="sheet-register" class="bottom-sheet p-6 space-y-4">
+    <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2"></div>
+    <div class="text-center">
+      <h3 class="text-lg font-bold text-primary">ลงทะเบียนครั้งแรก</h3>
+      <p class="text-xs text-gray-500 mt-0.5">ระบุชื่อเล่นเพื่อเข้าใช้ระบบสะสมแต้ม</p>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5">ชื่อเล่น (Nickname)</label>
+        <input id="register-nickname" type="text" placeholder="ระบุชื่อเล่นของคุณ" class="w-full p-3 bg-bg rounded-xl border border-transparent focus:border-primary outline-none text-sm">
+      </div>
+      <button type="submit" class="w-full py-3.5 bg-primary text-white rounded-xl font-semibold text-sm transition">ลงทะเบียน & ล็อกอิน</button>
+    </div>
+  </form>
+
+  <!-- 2. ANNOUNCEMENT SLIDER SHEET -->
+  <div id="sheet-announcements" class="bottom-sheet p-5 space-y-4 max-h-[85vh] overflow-y-auto">
+    <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-1"></div>
+    <div class="text-center">
+      <h3 class="text-base font-bold text-primary">ประกาศข่าวสารรักษ์โลก</h3>
+      <p class="text-[11px] text-gray-400">กรุณาปัดเพื่ออ่านรูปประกาศให้ครบถ้วนเพื่อรับสิทธิ์เช็คอิน</p>
+    </div>
+
+    <!-- Images Swipe Slider Container -->
+    <div class="relative w-full aspect-video overflow-hidden rounded-2xl bg-bg border border-secondary/20 shadow-inner flex items-center">
+      <div id="announcement-slider-track" class="w-full h-full flex transition-transform duration-300 ease-out">
+        <!-- Rendered images dynamic -->
+      </div>
+      <!-- Controls -->
+      <button onclick="changeAnnouncementSlide(-1)" class="absolute left-2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center text-xs backdrop-blur-sm"><i class="fa-solid fa-chevron-left"></i></button>
+      <button onclick="changeAnnouncementSlide(1)" class="absolute right-2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center text-xs backdrop-blur-sm"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+
+    <!-- Indicator Dots -->
+    <div id="announcement-dots" class="flex justify-center gap-1.5"></div>
+
+    <button id="btn-confirm-checkin" disabled onclick="submitCheckin()" class="w-full py-3 bg-primary hover:bg-dark text-white rounded-xl font-bold text-xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+      <i class="fa-solid fa-circle-check"></i>
+      <span>รับทราบและเช็คอิน</span>
+    </button>
+  </div>
+
+  <!-- 3. GENERIC ADD/EDIT BOTTOM SHEET -->
+  <div id="sheet-admin-editor" class="bottom-sheet p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+    <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2"></div>
+    <h3 id="admin-editor-title" class="text-lg font-bold text-primary border-b pb-2">เพิ่ม/แก้ไขรายการ</h3>
+    <div id="admin-editor-fields" class="space-y-3">
+      <!-- Generated Dynamically -->
+    </div>
+    <div class="flex gap-2">
+      <button onclick="closeAllSheets()" class="flex-grow py-3 bg-bg text-gray-600 rounded-xl font-semibold text-xs transition">ยกเลิก</button>
+      <button id="btn-admin-editor-save" class="flex-grow py-3 bg-primary text-white rounded-xl font-semibold text-xs transition">บันทึก</button>
+    </div>
+  </div>
+
+  <!-- ==================== LIGHTBOX MODAL ==================== -->
+  <div id="lightbox-modal" class="fixed inset-0 z-50 bg-black/90 hidden items-center justify-center p-4">
+    <button onclick="closeLightbox()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-lg"><i class="fa-solid fa-xmark"></i></button>
+    <img id="lightbox-image" src="" alt="Lightbox" class="max-w-full max-h-full object-contain rounded">
+  </div>
+
+  <!-- ==================== BOTTOM NAVIGATION BAR ==================== -->
+  <nav id="app-nav" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md md:bottom-0 md:left-0 md:translate-x-0 md:w-full md:max-w-none md:rounded-none md:border-x-0 h-16 bg-white/90 backdrop-blur-md border border-secondary/20 shadow-premium rounded-2xl md:rounded-none z-40 flex items-center justify-around px-2">
+    <button onclick="switchPage('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-1 py-1 text-primary transition w-12">
+      <i class="fa-solid fa-house-chimney text-lg"></i>
+      <span class="text-[9px] font-bold">หน้าแรก</span>
+    </button>
+    <button onclick="switchPage('checkin')" id="nav-checkin" class="flex flex-col items-center gap-1 py-1 text-gray-400 hover:text-primary transition w-12">
+      <i class="fa-solid fa-calendar-check text-lg"></i>
+      <span class="text-[9px] font-bold">เช็คอิน</span>
+    </button>
+    <button onclick="switchPage('game')" id="nav-game" class="flex flex-col items-center gap-1 py-1 text-gray-400 hover:text-primary transition w-12">
+      <i class="fa-solid fa-gamepad text-lg"></i>
+      <span class="text-[9px] font-bold">เล่นเกม</span>
+    </button>
+    <button onclick="switchPage('scanner')" id="nav-scanner" class="flex flex-col items-center gap-1 py-1 text-gray-400 hover:text-primary transition w-12">
+      <i class="fa-solid fa-qrcode text-lg"></i>
+      <span class="text-[9px] font-bold">สแกน</span>
+    </button>
+    <button onclick="switchPage('leaderboard')" id="nav-leaderboard" class="flex flex-col items-center gap-1 py-1 text-gray-400 hover:text-primary transition w-12">
+      <i class="fa-solid fa-ranking-star text-lg"></i>
+      <span class="text-[9px] font-bold">อันดับ</span>
+    </button>
+  </nav>
+
+  <!-- ==================== JAVASCRIPT STATE & ENGINE ==================== -->
+  <script>
+    // Audio Chime Synthesizer
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+      if (!audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        if (type === 'success') {
+          // Green chime: Major third ascending chord
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+          osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+          gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.35);
+        } else if (type === 'error') {
+          // Red buzzer: descending low buzz
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+          osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.25);
+          gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.25);
+        }
+      } catch (e) {
+        console.error("Audio error: ", e);
+      }
+    }
+
+    // 1. STATE & STORAGE MANAGEMENT
+    let db = {};
+    let currentUser = null;
+    let currentSheetId = localStorage.getItem("sheetId") || "";
+    let currentGasUrl = localStorage.getItem("gasUrl") || "";
+    let activePage = "login";
+    let activeAdminTab = "sys";
+    let activeLeaderboardTab = "weekly";
+    
+    // Default Mock Database State (For Sandbox Mode)
+    const mockDB = {
+      settings: [
+        { key: "logo_url", value: "https://img.icons8.com/dusk/64/recycle-sign.png" },
+        { key: "bg_morning", value: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1000&auto=format&fit=crop" },
+        { key: "bg_night", value: "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000&auto=format&fit=crop" },
+        { key: "announcements", value: JSON.stringify([
+          "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?q=80&w=800&auto=format&fit=crop"
+        ])},
+        { key: "weekly_cycles", value: JSON.stringify([
+          { id: "w1", start_date: "2026-06-08", end_date: "2026-06-14" },
+          { id: "w2", start_date: "2026-06-15", end_date: "2026-06-21" }
+        ])}
+      ],
+      levels: [
+        { level_id: "1", name: "Seedling", min_points: "0", dashboard_bg: "https://images.unsplash.com/photo-1463936575829-25148e1db1b8?q=80&w=600&auto=format&fit=crop", bg_color: "#5C8D67" },
+        { level_id: "2", name: "Sapling", min_points: "200", dashboard_bg: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?q=80&w=600&auto=format&fit=crop", bg_color: "#789D80" },
+        { level_id: "3", name: "Eco Warrior", min_points: "500", dashboard_bg: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=600&auto=format&fit=crop", bg_color: "#3D6E4A" },
+        { level_id: "4", name: "Green Guardian", min_points: "1000", dashboard_bg: "https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=600&auto=format&fit=crop", bg_color: "#2C5134" },
+        { level_id: "5", name: "Earth Savior", min_points: "2000", dashboard_bg: "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?q=80&w=600&auto=format&fit=crop", bg_color: "#1E3B26" }
+      ],
+      bins: [
+        { bin_id: "organic", name: "ขยะอินทรีย์", color: "#5C8D67", image_url: "https://img.icons8.com/isometric/100/apple.png", stage: "both" },
+        { bin_id: "recycle", name: "ขยะรีไซเคิล", color: "#F4B95F", image_url: "https://img.icons8.com/isometric/100/plastic-bottle.png", stage: "both" },
+        { bin_id: "hazard", name: "ขยะอันตราย", color: "#D9534F", image_url: "https://img.icons8.com/isometric/100/car-battery.png", stage: "both" },
+        { bin_id: "general", name: "ขยะทั่วไป", color: "#4A90E2", image_url: "https://img.icons8.com/isometric/100/food-wrapper.png", stage: "both" }
+      ],
+      wastes: [
+        { waste_id: "w1", name: "เศษแอปเปิ้ล (Apple core)", image_url: "https://img.icons8.com/color/96/apple-core.png", bin_id: "organic", stage: "both" },
+        { waste_id: "w2", name: "เปลือกกล้วย (Banana peel)", image_url: "https://img.icons8.com/color/96/banana.png", bin_id: "organic", stage: "both" },
+        { waste_id: "w3", name: "ใบไม้แห้ง (Dry leaves)", image_url: "https://img.icons8.com/color/96/fallen-leaves.png", bin_id: "organic", stage: "outdoor" },
+        { waste_id: "w4", name: "ขวดน้ำพลาสติก (Plastic bottle)", image_url: "https://img.icons8.com/color/96/plastic-bottle.png", bin_id: "recycle", stage: "both" },
+        { waste_id: "w5", name: "กระป๋องน้ำอัดลม (Soda can)", image_url: "https://img.icons8.com/color/96/soda-can.png", bin_id: "recycle", stage: "both" },
+        { waste_id: "w6", name: "กล่องกระดาษ (Cardboard)", image_url: "https://img.icons8.com/color/96/cardboard-box.png", bin_id: "recycle", stage: "indoor" },
+        { waste_id: "w7", name: "ถ่านไฟฉาย (Used batteries)", image_url: "https://img.icons8.com/color/96/battery-level-indicator.png", bin_id: "hazard", stage: "both" },
+        { waste_id: "w8", name: "หลอดไฟเสื่อม (Broken bulb)", image_url: "https://img.icons8.com/color/96/light-bulb.png", bin_id: "hazard", stage: "indoor" },
+        { waste_id: "w9", name: "ถุงขนมขบเคี้ยว (Snack foil)", image_url: "https://img.icons8.com/color/96/potato-chips.png", bin_id: "general", stage: "both" },
+        { waste_id: "w10", name: "กล่องโฟมเปื้อน (Styrofoam box)", image_url: "https://img.icons8.com/color/96/plastic-bag.png", bin_id: "general", stage: "both" }
+      ],
+      users: [
+        { empId: "admin123", nickname: "แอดมินระบบ", points: "0", streak: "0", last_checkin: "", is_admin: "true" },
+        { empId: "1234567", nickname: "สมยศ รักษ์โลก", points: "150", streak: "3", last_checkin: "2026-06-08", is_admin: "false" }
+      ],
+      qrs: [
+        { qr_id: "QR_ECO_WORLD_50", name: "กิจกรรมคาร์บอนต่ำ", points: "50", mode: "multi", expiry_date: "2026-12-31" },
+        { qr_id: "QR_SINGLE_GIFT_100", name: "สแกนของขวัญใบไม้", points: "100", mode: "single", expiry_date: "2026-12-31" }
+      ],
+      history: [
+        { id: "h1", empId: "1234567", action_type: "check_in", points: "20", timestamp: "2026-06-08 09:30:00", details: "เช็คอินวันที่ 3" }
+      ]
+    };
+
+    // Load state from local or remote database
+    async function loadFromCloud() {
+      // Always fetch latest if GAS URL is configured, else fallback to localStorage
+      if (currentGasUrl && currentSheetId) {
+        try {
+          const response = await fetch(currentGasUrl, {
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'omit',
+            body: JSON.stringify({
+              action: 'load',
+              sheetId: currentSheetId
+            })
+          });
+          const result = await response.json();
+          if (result && (result.db || (result.status && (String(result.status).toLowerCase() === 'success' || result.status === true)))) {
+            db = result.db;
+            localStorage.setItem("db", JSON.stringify(db));
+            console.log("Successfully loaded database from Google Sheets");
+            updateGlobalTimeBackground();
+            return true;
+          }
+        } catch (e) {
+          console.error("Cloud fetch failed, using local storage instead.", e);
+        }
+      }
+      
+      // Fallback
+      const local = localStorage.getItem("db");
+      if (local) {
+        db = JSON.parse(local);
+      } else {
+        db = mockDB;
+        localStorage.setItem("db", JSON.stringify(db));
+      }
+      updateGlobalTimeBackground();
+      return false;
+    }
+
+    // Save state locally and cloud-sync with stale prevention
+    async function syncSave(updaterFunc) {
+      // 1. Pull latest to prevent stale overwrite
+      await loadFromCloud();
+      
+      // 2. Perform updates
+      updaterFunc();
+      
+      // 3. Save to Local
+      localStorage.setItem("db", JSON.stringify(db));
+      
+      // 4. Save to Cloud asynchronously
+      if (currentGasUrl && currentSheetId) {
+        try {
+          await fetch(currentGasUrl, {
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'omit',
+            body: JSON.stringify({
+              action: 'save',
+              sheetId: currentSheetId,
+              payload: db
+            })
+          });
+          console.log("Database synced successfully with Google Sheets");
+        } catch (e) {
+          console.error("Cloud write sync failed, saved locally", e);
+        }
+      }
+    }
+
+    // Helper to get Date string YYYY-MM-DD
+    function getTodayString() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function getFormattedTimestamp() {
+      const now = new Date();
+      const date = getTodayString();
+      const h = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      return `${date} ${h}:${min}:${s}`;
+    }
+
+    // Weekly Cycle Check
+    function getCurrentWeekConfig() {
+      const today = getTodayString();
+      const settingsVal = db.settings || [];
+      const cycleSetting = settingsVal.find(s => s.key === 'weekly_cycles');
+      if (cycleSetting) {
+        try {
+          const cycles = JSON.parse(cycleSetting.value);
+          const current = cycles.find(c => today >= c.start_date && today <= c.end_date);
+          return current || null;
+        } catch (e) {
+          console.error("Cycles parsing failed", e);
+        }
+      }
+      return null;
+    }
+
+    // Check games quota for current weekly cycle
+    function getWeeklyGamesCount(empId) {
+      const cycle = getCurrentWeekConfig();
+      if (!cycle) return 0; // if no week is active, count is 0
+      
+      const history = db.history || [];
+      const gamePlays = history.filter(h => 
+        h.empId === empId && 
+        h.action_type === 'game' &&
+        h.timestamp.split(' ')[0] >= cycle.start_date &&
+        h.timestamp.split(' ')[0] <= cycle.end_date
+      );
+      return gamePlays.length;
+    }
+
+    // 2. PAGE ROUTING & NAVIGATION
+    function renderPageData(pageId) {
+      if (pageId === 'dashboard') {
+        updateDashboardView();
+      } else if (pageId === 'checkin') {
+        renderStreakUI();
+      } else if (pageId === 'leaderboard') {
+        initLeaderboardWeeklyDropdown();
+        renderLeaderboard();
+      } else if (pageId === 'game') {
+        initGameLobby();
+      } else if (pageId === 'admin') {
+        renderAdminDashboard();
+        switchAdminTab(activeAdminTab); // Ensure last active sub-tab is correctly styled and shown
+      }
+    }
+
+    let isSilentSyncing = false;
+    async function silentlySyncCloud() {
+      if (isSilentSyncing) return;
+      if (!currentGasUrl || !currentSheetId) return;
+      
+      isSilentSyncing = true;
+      try {
+        const synced = await loadFromCloud();
+        if (synced) {
+          // Sync currentUser structure if logged in
+          if (currentUser) {
+            const updatedUser = db.users.find(u => u.empId === currentUser.empId);
+            if (updatedUser) {
+              currentUser = updatedUser;
+            }
+          }
+          // Re-render currently active page silently with fresh data
+          renderPageData(activePage);
+          console.log("Silent cloud sync completed.");
+        }
+      } catch (e) {
+        console.error("Silent sync failed: ", e);
+      } finally {
+        isSilentSyncing = false;
+      }
+    }
+
+    // Periodically silent sync every 15 seconds to keep browser UI aligned with Google Sheets edits
+    setInterval(() => {
+      if (activePage !== 'login' && !gameActive && !isScannerOpen) {
+        silentlySyncCloud();
+      }
+    }, 15000);
+
+    function switchPage(pageId) {
+      // Close all sheets first for safety
+      closeAllSheets();
+
+      // Hide all panels
+      document.getElementById('page-login').classList.add('hidden');
+      document.getElementById('page-dashboard').classList.add('hidden');
+      document.getElementById('page-checkin').classList.add('hidden');
+      document.getElementById('page-game').classList.add('hidden');
+      document.getElementById('page-scanner').classList.add('hidden');
+      document.getElementById('page-leaderboard').classList.add('hidden');
+      document.getElementById('page-admin').classList.add('hidden');
+      
+      // Stop scanner if leaving QR page
+      if (activePage === 'scanner' && pageId !== 'scanner') {
+        stopScanner();
+      }
+
+      // Show requested page
+      document.getElementById(`page-${pageId}`).classList.remove('hidden');
+      activePage = pageId;
+
+      // Update Navigation styling
+      const nav = document.getElementById('app-nav');
+      if (pageId === 'login') {
+        nav.classList.add('hidden');
+        document.getElementById('app-header').classList.add('hidden');
+      } else {
+        nav.classList.remove('hidden');
+        document.getElementById('app-header').classList.remove('hidden');
+        
+        // Highlight active navigation tab
+        const navTabs = ['dashboard', 'checkin', 'game', 'scanner', 'leaderboard'];
+        navTabs.forEach(t => {
+          const btn = document.getElementById(`nav-${t}`);
+          if (btn) {
+            if (t === pageId || (pageId === 'admin' && t === 'dashboard')) {
+              btn.classList.add('text-primary');
+              btn.classList.remove('text-gray-400');
+            } else {
+              btn.classList.remove('text-primary');
+              btn.classList.add('text-gray-400');
+            }
+          }
+        });
+      }
+
+      // Keep admin badge visible on all pages if admin is logged in
+      const adminBadge = document.getElementById('admin-badge');
+      if (currentUser && (currentUser.is_admin === 'true' || currentUser.empId === 'admin123')) {
+        adminBadge.classList.remove('hidden');
+      } else {
+        adminBadge.classList.add('hidden');
+      }
+
+      // Page-specific setup
+      renderPageData(pageId);
+
+      // Silently sync from cloud to get any direct Google Sheets edits
+      if (pageId !== 'login') {
+        silentlySyncCloud();
+      }
+    }
+
+    // 3. AUTHENTICATION & LOGIN
+    let loginEmpID = "";
+
+    function submitLogin() {
+      const empIdInput = document.getElementById('login-empid').value.trim();
+      
+      if (!empIdInput) {
+        Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณากรอกรหัสพนักงาน!', confirmButtonColor: '#5C8D67' });
+        return;
+      }
+      
+      if (empIdInput === 'admin123') {
+        // Logged in as admin
+        currentUser = { empId: 'admin123', nickname: 'แอดมินระบบ', points: '0', is_admin: 'true' };
+        document.getElementById('admin-badge').classList.remove('hidden');
+        Swal.fire({ icon: 'success', title: 'ผู้ดูแลระบบ', text: 'เข้าใช้งาน Admin Center สำเร็จ', timer: 1500, showConfirmButton: false });
+        switchPage('admin');
+        return;
+      }
+
+      // Check Emp ID: Must be 7-digit number
+      const empIdRegex = /^[0-9]{7}$/;
+      if (!empIdRegex.test(empIdInput)) {
+        Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'รหัสพนักงานต้องเป็นตัวเลข 7 หลัก!', confirmButtonColor: '#5C8D67' });
+        return;
+      }
+
+      // Search user
+      const users = db.users || [];
+      const user = users.find(u => u.empId === empIdInput);
+      
+      if (user) {
+        currentUser = user;
+        document.getElementById('admin-badge').classList.add('hidden');
+        Swal.fire({ icon: 'success', title: 'ยินดีต้อนรับกลับ', text: `คุณ ${user.nickname} เข้าสู่ระบบสำเร็จ`, timer: 1500, showConfirmButton: false });
+        switchPage('dashboard');
+      } else {
+        // First-time login: show Register Nickname Sheet
+        loginEmpID = empIdInput;
+        openSheet('register');
+      }
+    }
+
+    async function submitRegister() {
+      const nickname = document.getElementById('register-nickname').value.trim();
+      if (!nickname) {
+        Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาระบุชื่อเล่นของคุณ', confirmButtonColor: '#5C8D67' });
+        return;
+      }
+
+      Swal.fire({ title: 'กำลังลงทะเบียน...', didOpen: () => { Swal.showLoading(); } });
+
+      await syncSave(() => {
+        const newUser = {
+          empId: loginEmpID,
+          nickname: nickname,
+          points: "0",
+          streak: "0",
+          last_checkin: "",
+          is_admin: "false"
+        };
+        db.users.push(newUser);
+        currentUser = newUser;
+      });
+
+      Swal.close();
+      closeAllSheets();
+      document.getElementById('admin-badge').classList.add('hidden');
+      Swal.fire({ icon: 'success', title: 'ยินดีต้อนรับผู้ใช้ใหม่!', text: `คุณ ${nickname} ลงทะเบียนสำเร็จ`, timer: 2000, showConfirmButton: false });
+      switchPage('dashboard');
+    }
+
+    function handleLogout() {
+      Swal.fire({
+        title: 'ยืนยันการออกจากระบบ?',
+        text: "คุณต้องการออกจากแอปพลิเคชันหรือไม่",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#5C8D67',
+        cancelButtonColor: '#D9534F',
+        confirmButtonText: 'ออกจากระบบ',
+        cancelButtonText: 'ยกเลิก'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          currentUser = null;
+          document.getElementById('login-empid').value = "";
+          document.getElementById('admin-badge').classList.add('hidden');
+          switchPage('login');
+        }
+      });
+    }
+
+    async function handleRefresh() {
+      Swal.fire({
+        title: 'กำลังรีเฟรชข้อมูล...',
+        html: 'กรุณารอสักครู่ระบบกำลังดึงข้อมูลล่าสุดจาก Google Sheets',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      
+      try {
+        const synced = await loadFromCloud();
+        
+        // Sync currentUser structure if logged in
+        if (currentUser) {
+          const updatedUser = db.users.find(u => u.empId === currentUser.empId);
+          if (updatedUser) {
+            currentUser = updatedUser;
+          }
+        }
+        
+        // Re-render the active page to display new updates
+        if (activePage === 'dashboard') {
+          updateDashboardView();
+        } else if (activePage === 'checkin') {
+          renderStreakUI();
+        } else if (activePage === 'leaderboard') {
+          initLeaderboardWeeklyDropdown();
+          renderLeaderboard();
+        } else if (activePage === 'admin') {
+          renderAdminDashboard();
+          switchAdminTab(activeAdminTab);
+        }
+        
+        Swal.close();
+        
+        if (synced) {
+          playSound('success');
+          Swal.fire({
+            icon: 'success',
+            title: 'รีเฟรชสำเร็จ',
+            text: 'ข้อมูลล่าสุดซิงค์เรียบร้อยแล้ว',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        } else {
+          Swal.fire({
+            icon: 'info',
+            title: 'โหมดออฟไลน์',
+            text: 'ใช้ข้อมูลจำลองจากการจัดเก็บในเบราว์เซอร์',
+            confirmButtonColor: '#5C8D67',
+            confirmButtonText: 'ตกลง'
+          });
+        }
+      } catch (e) {
+        console.error("Refresh failed: ", e);
+        Swal.close();
+        Swal.fire({
+          icon: 'error',
+          title: 'รีเฟรชล้มเหลว',
+          text: 'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + e.toString(),
+          confirmButtonColor: '#5C8D67'
+        });
+      }
+    }
+
+    // 4. LANDING & HOME INTERACTIVES
+    // Quote and Sky changer
+    function initLandingPage() {
+      const now = new Date();
+      const hour = now.getHours();
+      const sky = document.getElementById('sky-overlay');
+      const quote = document.getElementById('quote-text');
+      
+      const quotes = [
+        "\"แยกขยะวันนี้ เพื่อสร้างอนาคตที่ดีให้ลูกหลาน\"",
+        "\"ใบไม้ทุกใบที่คุณสะสม คือความพยายามร่วมลดโลกร้อน\"",
+        "\"ขยะอินทรีย์ช่วยทำปุ๋ย ขยะรีไซเคิลสร้างชีวีใหม่\"",
+        "\"รักโลก ดูแลสิ่งแวดล้อม เริ่มต้นง่ายๆ ที่ขยะรอบตัวคุณ\"",
+        "\"เช็คอินทุกวัน เพื่อย้ำเจตนารมณ์ในการแยกขยะอย่างถูกวิธี\""
+      ];
+      
+      // Rotate Quotes
+      let quoteIdx = 0;
+      setInterval(() => {
+        quote.style.opacity = 0;
+        setTimeout(() => {
+          quoteIdx = (quoteIdx + 1) % quotes.length;
+          quote.innerText = quotes[quoteIdx];
+          quote.style.opacity = 1;
+        }, 500);
+      }, 5000);
+
+      // Sky gradient check
+      if (hour >= 6 && hour < 18) {
+        // Morning theme
+        sky.className = "absolute inset-0 transition-all duration-1000 pointer-events-none opacity-40 bg-gradient-to-b from-orange-300 via-sky-300 to-transparent";
+      } else {
+        // Night theme
+        sky.className = "absolute inset-0 transition-all duration-1000 pointer-events-none opacity-60 bg-gradient-to-b from-slate-900 via-purple-900 to-transparent";
+      }
+      
+      updateGlobalTimeBackground();
+    }
+
+    function updateGlobalTimeBackground() {
+      const now = new Date();
+      const hour = now.getHours();
+      
+      const defaultMorning = "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1000&auto=format&fit=crop";
+      const defaultNight = "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000&auto=format&fit=crop";
+      
+      let morningUrl = defaultMorning;
+      let nightUrl = defaultNight;
+      
+      if (db && db.settings) {
+        const bgMSetting = db.settings.find(s => s.key === 'bg_morning');
+        const bgNSetting = db.settings.find(s => s.key === 'bg_night');
+        if (bgMSetting && bgMSetting.value) morningUrl = bgMSetting.value;
+        if (bgNSetting && bgNSetting.value) nightUrl = bgNSetting.value;
+      }
+      
+      const bgUrl = (hour >= 6 && hour < 18) ? morningUrl : nightUrl;
+      
+      // Apply to global background div instead of body to prevent mobile background bugs
+      const globalBg = document.getElementById('global-bg');
+      if (globalBg) {
+        globalBg.style.backgroundImage = `url('${bgUrl}')`;
+      }
+      
+      // Also apply inline to the landing page container to ensure it covers it fully
+      const loginPage = document.getElementById('page-login');
+      if (loginPage) {
+        loginPage.style.backgroundImage = `url('${bgUrl}')`;
+        loginPage.style.backgroundSize = 'cover';
+        loginPage.style.backgroundPosition = 'center';
+      }
+    }
+
+    // Dashboard View Updater
+    function updateDashboardView() {
+      if (!currentUser) return;
+      
+      // Nickname & EmpID
+      document.getElementById('dashboard-nickname').innerText = currentUser.nickname;
+      document.getElementById('dashboard-empid').innerText = `Emp ID: ${currentUser.empId}`;
+
+      // Calculate level
+      const points = parseInt(currentUser.points) || 0;
+      document.getElementById('dashboard-points').innerText = points;
+      
+      // Level progression logic
+      const levels = db.levels || [];
+      // Sort level by points requirement
+      levels.sort((a,b) => parseInt(a.min_points) - parseInt(b.min_points));
+      
+      let currentLvl = levels[0];
+      let nextLvl = null;
+      
+      for (let i = 0; i < levels.length; i++) {
+        if (points >= parseInt(levels[i].min_points)) {
+          currentLvl = levels[i];
+          nextLvl = levels[i+1] || null;
+        }
+      }
+      
+      document.getElementById('dashboard-level-name').innerText = currentLvl.name;
+      
+      // Update Level background style of dashboard card
+      const card = document.getElementById('user-profile-card');
+      card.style.backgroundImage = `url('${currentLvl.dashboard_bg}')`;
+      
+      // Update Level Avatar Image
+      const lvlImg = document.getElementById('dashboard-level-img');
+      if (lvlImg) {
+        lvlImg.src = currentLvl.dashboard_bg;
+      }
+      
+      let progressPercent = 0;
+      if (nextLvl) {
+        const min = parseInt(currentLvl.min_points);
+        const max = parseInt(nextLvl.min_points);
+        const diff = max - min;
+        const earned = points - min;
+        progressPercent = Math.min(100, Math.max(0, (earned / diff) * 100));
+        document.getElementById('dashboard-level-pts').innerText = `${points} / ${max} แต้ม`;
+      } else {
+        progressPercent = 100;
+        document.getElementById('dashboard-level-pts').innerText = `${points} แต้ม (เลเวลสูงสุด)`;
+      }
+      
+      document.getElementById('dashboard-progress').style.width = `${progressPercent}%`;
+
+      // Streak
+      document.getElementById('dashboard-streak').innerText = `${currentUser.streak || 0} วันต่อเนื่อง`;
+
+      // Quota games
+      const plays = getWeeklyGamesCount(currentUser.empId);
+      const remaining = Math.max(0, 2 - plays);
+      document.getElementById('dashboard-quota').innerText = `เหลือ ${remaining} ครั้ง/สัปดาห์`;
+    }
+
+    // 5. DAILY STREAK & ANNOUNCEMENTS
+    // Streak calculations
+    const streakBonuses = [1, 2, 3, 4, 5, 6, 7];
+    
+    function renderStreakUI() {
+      const streak = parseInt(currentUser.streak) || 0;
+      const today = getTodayString();
+      const lastCheckin = currentUser.last_checkin || "";
+      const isCheckedInToday = (lastCheckin === today);
+      
+      const grid = document.getElementById('streak-grid');
+      grid.innerHTML = "";
+      
+      // Determine what day player is on in their current 7-day cycle
+      let activeDayInCycle = 1;
+      if (isCheckedInToday) {
+        activeDayInCycle = (streak % 7);
+        if (activeDayInCycle === 0 && streak > 0) {
+          activeDayInCycle = 7;
+        }
+      } else {
+        activeDayInCycle = (streak % 7) + 1;
+        if (activeDayInCycle > 7) {
+          activeDayInCycle = 1;
+        }
+      }
+      
+      for (let i = 1; i <= 7; i++) {
+        const bonus = streakBonuses[i-1];
+        let stateClass = "";
+        let checkIcon = `<i class="fa-solid fa-leaf text-lg"></i>`;
+        
+        if (i < activeDayInCycle) {
+          // Completed
+          stateClass = "bg-primary text-white border-primary";
+          checkIcon = `<i class="fa-solid fa-circle-check text-xl"></i>`;
+        } else if (i === activeDayInCycle) {
+          if (isCheckedInToday) {
+            // Completed today
+            stateClass = "bg-primary text-white border-primary";
+            checkIcon = `<i class="fa-solid fa-circle-check text-xl"></i>`;
+          } else {
+            // Waiting to checkin today
+            stateClass = "bg-accent/20 text-dark border-accent border-2 font-bold animate-pulse";
+          }
+        } else {
+          // Locked
+          stateClass = "bg-bg text-gray-400 border-secondary/20";
+        }
+        
+        grid.innerHTML += `
+          <div class="rounded-2xl p-2.5 flex flex-col items-center justify-between border shadow-sm aspect-square ${stateClass}">
+            <span class="text-[9px] font-bold uppercase">วันที่ ${i}</span>
+            <div class="my-1">${checkIcon}</div>
+            <span class="text-[10px] font-extrabold">+${bonus} แต้ม</span>
+          </div>
+        `;
+      }
+
+      // Check-in Button State
+      const btn = document.getElementById('btn-trigger-checkin');
+      if (isCheckedInToday) {
+        btn.disabled = true;
+        btn.classList.remove('bg-primary');
+        btn.classList.add('bg-gray-300');
+        btn.querySelector('span').innerText = "วันนี้คุณเช็คอินแล้ว";
+      } else {
+        btn.disabled = false;
+        btn.classList.add('bg-primary');
+        btn.classList.remove('bg-gray-300');
+        btn.querySelector('span').innerText = "เช็คอินวันนี้";
+      }
+    }
+
+    // Carousel Image announcements
+    let announcementSlideIdx = 0;
+    let announcementImages = [];
+    
+    function openAnnouncementModal() {
+      // Load announcement photos from settings
+      const photosSetting = db.settings.find(s => s.key === 'announcements');
+      try {
+        announcementImages = JSON.parse(photosSetting.value) || [];
+      } catch (e) {
+        announcementImages = [
+          "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=800&auto=format&fit=crop"
+        ];
+      }
+
+      // Setup Slider
+      const track = document.getElementById('announcement-slider-track');
+      track.innerHTML = "";
+      
+      announcementImages.forEach(img => {
+        track.innerHTML += `
+          <div class="w-full h-full flex-shrink-0 flex items-center justify-center p-1 bg-black">
+            <img src="${img}" class="h-full max-w-full object-contain cursor-zoom-in" onclick="openLightbox('${img}')">
+          </div>
+        `;
+      });
+
+      // Slider Width configuration
+      track.style.width = `${announcementImages.length * 100}%`;
+      announcementSlideIdx = 0;
+      updateAnnouncementSlidePosition();
+
+      // Swipe checker: if only 1 image, checkin is instantly clickable
+      const confirmBtn = document.getElementById('btn-confirm-checkin');
+      if (announcementImages.length <= 1) {
+        confirmBtn.disabled = false;
+      } else {
+        confirmBtn.disabled = true;
+      }
+      
+      openSheet('announcements');
+    }
+
+    function changeAnnouncementSlide(dir) {
+      announcementSlideIdx = Math.max(0, Math.min(announcementImages.length - 1, announcementSlideIdx + dir));
+      updateAnnouncementSlidePosition();
+    }
+
+    function updateAnnouncementSlidePosition() {
+      const track = document.getElementById('announcement-slider-track');
+      const percentage = -(announcementSlideIdx * (100 / announcementImages.length));
+      track.style.transform = `translateX(${percentage}%)`;
+
+      // Render dots
+      const dotsContainer = document.getElementById('announcement-dots');
+      dotsContainer.innerHTML = "";
+      for (let i = 0; i < announcementImages.length; i++) {
+        const dotActive = i === announcementSlideIdx ? 'bg-primary w-4' : 'bg-gray-300 w-1.5';
+        dotsContainer.innerHTML += `<span class="h-1.5 rounded-full transition-all duration-300 ${dotActive}"></span>`;
+      }
+
+      // If slide reaches the last photo, unlock confirm check-in button
+      if (announcementSlideIdx === announcementImages.length - 1) {
+        document.getElementById('btn-confirm-checkin').disabled = false;
+      }
+    }
+
+    async function submitCheckin() {
+      const today = getTodayString();
+      const lastCheckin = currentUser.last_checkin || "";
+      
+      if (lastCheckin === today) {
+        Swal.fire({ icon: 'warning', title: 'เกิดข้อผิดพลาด', text: 'คุณได้ทำการเช็คอินของวันนี้แล้ว!' });
+        return;
+      }
+
+      Swal.fire({ title: 'กำลังเช็คอิน...', didOpen: () => { Swal.showLoading(); } });
+
+      let streak = parseInt(currentUser.streak) || 0;
+      
+      // Calculate new streak
+      let yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.getFullYear() + "-" + String(yesterday.getMonth() + 1).padStart(2, '0') + "-" + String(yesterday.getDate()).padStart(2, '0');
+
+      if (lastCheckin === yesterdayStr) {
+        // Consecutive check-in
+        streak++;
+      } else if (lastCheckin === today) {
+        // Double check safety
+        Swal.close();
+        return;
+      } else {
+        // Streak broken
+        streak = 1;
+      }
+
+      // Max out streak display at 7
+      let dayIndex = (streak % 7);
+      if (dayIndex === 0) dayIndex = 7;
+      
+      const bonusPoints = streakBonuses[dayIndex - 1];
+
+      await syncSave(() => {
+        // 1. Update User Points and Streak
+        const dbUser = db.users.find(u => u.empId === currentUser.empId);
+        dbUser.points = String((parseInt(dbUser.points) || 0) + bonusPoints);
+        dbUser.streak = String(streak);
+        dbUser.last_checkin = today;
+        currentUser = dbUser;
+
+        // 2. Add History Row
+        db.history.push({
+          id: 'H_' + Date.now(),
+          empId: currentUser.empId,
+          action_type: 'check_in',
+          points: String(bonusPoints),
+          timestamp: getFormattedTimestamp(),
+          details: `เช็คอินวันที่ ${dayIndex} (Streak ${streak} วัน)`
+        });
+      });
+
+      Swal.close();
+      closeAllSheets();
+      
+      playSound('success');
+      Swal.fire({
+        icon: 'success',
+        title: 'เช็คอินสำเร็จ!',
+        text: `รับใบไม้สะสมโบนัส +${bonusPoints} ใบ (เช็คอินสะสมติดต่อกันได้ ${streak} วัน)`,
+        confirmButtonColor: '#5C8D67'
+      });
+      switchPage('dashboard');
+    }
+
+    // Lightbox Controls
+    function openLightbox(url) {
+      document.getElementById('lightbox-image').src = url;
+      document.getElementById('lightbox-modal').classList.remove('hidden');
+      document.getElementById('lightbox-modal').classList.add('flex');
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox-modal').classList.add('hidden');
+      document.getElementById('lightbox-modal').classList.remove('flex');
+    }
+
+    // 6. SORTING GAME ENGINE
+    let gameTimerInterval = null;
+    let gameScore = 0;
+    let gameTimeRemaining = 120; // 2 minutes (120 seconds) per stage
+    let currentStageName = "indoor"; // indoor or outdoor
+    let gameWastesList = [];
+    let gameActive = false;
+
+    function initGameLobby() {
+      const plays = getWeeklyGamesCount(currentUser.empId);
+      const remaining = Math.max(0, 2 - plays);
+      document.getElementById('game-lobby-quota').innerText = `เหลือ ${remaining} ครั้ง`;
+      
+      const btn = document.getElementById('btn-start-game');
+      if (remaining <= 0) {
+        btn.disabled = true;
+        btn.classList.add('opacity-50');
+      } else {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50');
+      }
+
+      // Hide game canvas
+      document.getElementById('game-lobby').classList.remove('hidden');
+      document.getElementById('game-active').classList.add('hidden');
+    }
+
+    async function startGameFlow() {
+      // double check quota right before starting
+      await loadFromCloud();
+      const plays = getWeeklyGamesCount(currentUser.empId);
+      if (plays >= 2) {
+        Swal.fire({ icon: 'warning', title: 'โควต้าเต็ม!', text: 'สัปดาห์นี้คุณเข้าเล่นเกมคัดแยกขยะครบ 2 ครั้งแล้ว' });
+        initGameLobby();
+        return;
+      }
+
+      // Setup Stage 1: Indoor
+      gameScore = 0;
+      currentStageName = "indoor";
+      gameTimeRemaining = 120; // 2 minutes
+      gameActive = true;
+      
+      document.getElementById('game-lobby').classList.add('hidden');
+      document.getElementById('game-active').classList.remove('hidden');
+      
+      startStage(currentStageName);
+    }
+
+    function startStage(stageName) {
+      document.getElementById('game-stage-indicator').innerText = stageName === 'indoor' ? 'ด่านในอาคาร' : 'ด่านกลางแจ้ง';
+      document.getElementById('game-score').innerText = gameScore;
+      
+      // Stage Background URL
+      const canvas = document.getElementById('game-canvas');
+      if (stageName === 'indoor') {
+        canvas.style.backgroundImage = `url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1000&auto=format&fit=crop')`;
+      } else {
+        canvas.style.backgroundImage = `url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1000&auto=format&fit=crop')`;
+      }
+
+      // Render Bins Dock
+      renderGameBins();
+
+      // Clear old items and Spawn Wastes
+      canvas.innerHTML = "";
+      spawnWasteBatch();
+
+      // Timer Interval
+      if (gameTimerInterval) clearInterval(gameTimerInterval);
+      updateGameTimerDisplay();
+      
+      gameTimerInterval = setInterval(() => {
+        gameTimeRemaining--;
+        updateGameTimerDisplay();
+        
+        if (gameTimeRemaining <= 0) {
+          clearInterval(gameTimerInterval);
+          if (stageName === 'indoor') {
+            // Stage 1 ended: transition to Outdoor stage
+            Swal.fire({
+              title: 'จบด่านในอาคาร!',
+              text: 'เตรียมตัวลุยต่อด่านนอกอาคาร (ด่านกลางแจ้ง)',
+              icon: 'info',
+              timer: 3000,
+              showConfirmButton: false,
+              allowOutsideClick: false
+            }).then(() => {
+              currentStageName = "outdoor";
+              gameTimeRemaining = 120; // reset
+              startStage(currentStageName);
+            });
+          } else {
+            // Game Finished completely
+            finishGame();
+          }
+        }
+      }, 1000);
+    }
+
+    function updateGameTimerDisplay() {
+      const min = String(Math.floor(gameTimeRemaining / 60)).padStart(2, '0');
+      const sec = String(gameTimeRemaining % 60).padStart(2, '0');
+      document.getElementById('game-timer').innerText = `${min}:${sec}`;
+    }
+
+    function renderGameBins() {
+      const dock = document.getElementById('game-bins-dock');
+      dock.innerHTML = "";
+      
+      const bins = db.bins || [];
+      // Filter bins suitable for current stage
+      const filterBins = bins.filter(b => !b.stage || b.stage === 'both' || b.stage === currentStageName);
+      
+      filterBins.forEach(bin => {
+        dock.innerHTML += `
+          <div id="bin-${bin.bin_id}" data-binid="${bin.bin_id}" class="game-bin flex-grow flex flex-col items-center justify-end p-2 rounded-xl text-white select-none border-2 border-transparent transition-all overflow-visible relative" style="background-color: ${bin.color}D9;">
+            <img src="${bin.image_url}" class="w-12 h-12 object-contain select-none pointer-events-none drop-shadow -translate-y-2.5 transition-transform">
+            <span class="text-[9px] font-bold text-center leading-none">${bin.name}</span>
+          </div>
+        `;
+      });
+    }
+
+    function spawnWasteBatch() {
+      const canvas = document.getElementById('game-canvas');
+      canvas.innerHTML = ""; // Clear existing
+
+      // Filter wastes suitable for current stage
+      const allWastes = db.wastes || [];
+      const filterWastes = allWastes.filter(w => w.stage === 'both' || w.stage === currentStageName);
+      
+      if (filterWastes.length === 0) return;
+
+      // Spawn 10 random items
+      for (let i = 0; i < 10; i++) {
+        const waste = filterWastes[Math.floor(Math.random() * filterWastes.length)];
+        createWasteElement(waste, i);
+      }
+    }
+
+    function createWasteElement(waste, index) {
+      const canvas = document.getElementById('game-canvas');
+      const elem = document.createElement('div');
+      elem.className = "absolute bg-white/95 text-dark border border-secondary px-3 py-2 rounded-2xl flex items-center gap-1.5 shadow-md max-w-[150px] cursor-grab active:cursor-grabbing z-10 break-words select-none whitespace-normal break-all";
+      elem.style.touchAction = "none";
+      
+      // Calculate random positions (inside a safe inner container bounding box)
+      const canvasWidth = canvas.clientWidth;
+      const canvasHeight = canvas.clientHeight;
+
+      const randomX = Math.floor(Math.random() * (canvasWidth - 140));
+      const randomY = Math.floor(Math.random() * (canvasHeight - 120)) + 30; // buffer header HUD
+
+      elem.style.left = `${randomX}px`;
+      elem.style.top = `${randomY}px`;
+      elem.dataset.wasteid = waste.waste_id;
+      elem.dataset.correctbin = waste.bin_id;
+
+      elem.innerHTML = `
+        <img src="${waste.image_url}" class="w-6 h-6 object-contain pointer-events-none select-none flex-shrink-0">
+        <span class="text-[9.5px] font-bold select-none leading-tight pointer-events-none break-words whitespace-normal">${waste.name}</span>
+      `;
+
+      // Drag and Drop implementation using Pointer Events (highly responsive for mobile + PC)
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let initialLeft = 0;
+      let initialTop = 0;
+
+      elem.addEventListener('pointerdown', (e) => {
+        isDragging = true;
+        elem.setPointerCapture(e.pointerId);
+        startX = e.clientX;
+        startY = e.clientY;
+        initialLeft = parseInt(elem.style.left);
+        initialTop = parseInt(elem.style.top);
+        elem.classList.add('scale-105', 'shadow-2xl', 'z-55');
+      });
+
+      elem.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        elem.style.left = `${initialLeft + dx}px`;
+        elem.style.top = `${initialTop + dy}px`;
+
+        // Check highlights on overlapping bins
+        const elemRect = elem.getBoundingClientRect();
+        const bins = document.querySelectorAll('.game-bin');
+        bins.forEach(bin => {
+          const binRect = bin.getBoundingClientRect();
+          // Detect Overlap
+          if (!(elemRect.right < binRect.left || 
+                elemRect.left > binRect.right || 
+                elemRect.bottom < binRect.top || 
+                elemRect.top > binRect.bottom)) {
+            bin.classList.add('border-white', 'scale-105');
+          } else {
+            bin.classList.remove('border-white', 'scale-105');
+          }
+        });
+      });
+
+      elem.addEventListener('pointerup', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        elem.releasePointerCapture(e.pointerId);
+        elem.classList.remove('scale-105', 'shadow-2xl');
+
+        // Check drop target overlap
+        const elemRect = elem.getBoundingClientRect();
+        const bins = document.querySelectorAll('.game-bin');
+        let dropped = false;
+
+        bins.forEach(bin => {
+          bin.classList.remove('border-white', 'scale-105');
+          const binRect = bin.getBoundingClientRect();
+          
+          if (!dropped && !(elemRect.right < binRect.left || 
+                           elemRect.left > binRect.right || 
+                           elemRect.bottom < binRect.top || 
+                           elemRect.top > binRect.bottom)) {
+            // Overlapping dropped bin
+            dropped = true;
+            const binId = bin.dataset.binid;
+            const correctBin = elem.dataset.correctbin;
+            
+            handleWasteDrop(elem, bin, binId === correctBin);
+          }
+        });
+
+        // Snap back if not dropped
+        if (!dropped) {
+          elem.style.left = `${initialLeft}px`;
+          elem.style.top = `${initialTop}px`;
+        }
+      });
+
+      canvas.appendChild(elem);
+    }
+
+    function handleWasteDrop(elem, bin, isCorrect) {
+      const pointsChange = isCorrect ? 50 : -10;
+      gameScore = Math.max(0, gameScore + pointsChange);
+      document.getElementById('game-score').innerText = gameScore;
+      
+      // Play Audio Synthesizer sound
+      playSound(isCorrect ? 'success' : 'error');
+
+      // Create Floating text indicator animation
+      const canvas = document.getElementById('game-canvas');
+      const floatText = document.createElement('div');
+      floatText.className = `floating-score ${isCorrect ? 'text-primary' : 'text-red-500'}`;
+      floatText.innerText = isCorrect ? `+50` : `-10`;
+      
+      // Position floating text above the drop target bin
+      const elemRect = elem.getBoundingClientRect();
+      const canvasRect = canvas.getBoundingClientRect();
+      const floatLeft = elemRect.left - canvasRect.left + (elemRect.width / 2);
+      const floatTop = elemRect.top - canvasRect.top;
+      
+      floatText.style.left = `${floatLeft}px`;
+      floatText.style.top = `${floatTop}px`;
+      canvas.appendChild(floatText);
+
+      // Clean float text element when animation is complete
+      setTimeout(() => floatText.remove(), 800);
+
+      // Remove waste element
+      elem.remove();
+
+      // Check if canvas is empty of wastes. If yes, spawn another batch
+      if (canvas.querySelectorAll('[data-wasteid]').length === 0) {
+        spawnWasteBatch();
+      }
+    }
+
+    async function finishGame() {
+      gameActive = false;
+      if (gameTimerInterval) clearInterval(gameTimerInterval);
+      
+      // double check quota right before saving score
+      Swal.fire({ title: 'กำลังบันทึกคะแนน...', didOpen: () => { Swal.showLoading(); } });
+      await loadFromCloud();
+
+      const plays = getWeeklyGamesCount(currentUser.empId);
+      if (plays >= 2) {
+        Swal.close();
+        Swal.fire({
+          icon: 'error',
+          title: 'ไม่สามารถบันทึกแต้มได้',
+          text: 'โควต้าการเล่นเกมของคุณเต็มในสัปดาห์นี้ (จำกัด 2 ครั้ง)',
+          confirmButtonColor: '#5C8D67'
+        });
+        initGameLobby();
+        return;
+      }
+
+      await syncSave(() => {
+        // 1. Add game points to user
+        const dbUser = db.users.find(u => u.empId === currentUser.empId);
+        dbUser.points = String((parseInt(dbUser.points) || 0) + gameScore);
+        currentUser = dbUser;
+
+        // 2. Add history record
+        db.history.push({
+          id: 'H_' + Date.now(),
+          empId: currentUser.empId,
+          action_type: 'game',
+          points: String(gameScore),
+          timestamp: getFormattedTimestamp(),
+          details: `เล่นเกมคัดแยกขยะ ได้รับคะแนนสะสม`
+        });
+      });
+
+      Swal.close();
+      Swal.fire({
+        icon: 'success',
+        title: 'สิ้นสุดการท้าทาย!',
+        text: `คุณทำคะแนนได้ทั้งหมด ${gameScore} คะแนน ได้รับใบไม้สะสมแล้ว!`,
+        confirmButtonColor: '#5C8D67'
+      });
+      switchPage('dashboard');
+    }
+
+    // 7. QR CODE SCANNER CONTROLS
+    let html5QrcodeScanner = null;
+    let isScannerOpen = false;
+
+    function toggleScanner() {
+      if (isScannerOpen) {
+        stopScanner();
+      } else {
+        startScanner();
+      }
+    }
+
+    function startScanner() {
+      const placeholder = document.getElementById('scanner-placeholder');
+      placeholder.classList.add('hidden');
+      
+      // Instance initialization
+      html5QrcodeScanner = new Html5Qrcode("reader");
+      
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      
+      // Automatically selects the best camera config (e.g. rear camera for smartphones)
+      html5QrcodeScanner.start(
+        { facingMode: "environment" }, 
+        config, 
+        onQrCodeScanSuccess,
+        onQrCodeScanFailure
+      ).then(() => {
+        isScannerOpen = true;
+        document.getElementById('btn-toggle-camera').querySelector('span').innerText = "ปิดกล้องสแกน";
+      }).catch(err => {
+        console.error("Camera open failed: ", err);
+        Swal.fire({ icon: 'error', title: 'เปิดกล้องล้มเหลว', text: 'เบราว์เซอร์ไม่ได้รับการอนุญาตให้เข้าถึงกล้อง' });
+        placeholder.classList.remove('hidden');
+      });
+    }
+
+    function stopScanner() {
+      if (html5QrcodeScanner && isScannerOpen) {
+        html5QrcodeScanner.stop().then(() => {
+          isScannerOpen = false;
+          document.getElementById('btn-toggle-camera').querySelector('span').innerText = "เปิดกล้องสแกน QR";
+          document.getElementById('scanner-placeholder').classList.remove('hidden');
+        }).catch(err => {
+          console.error("Stop failed: ", err);
+        });
+      }
+    }
+
+    async function onQrCodeScanSuccess(decodedText, decodedResult) {
+      stopScanner();
+      
+      Swal.fire({ title: 'กำลังสแกนประมวลผล...', didOpen: () => { Swal.showLoading(); } });
+      await loadFromCloud();
+
+      // Find Campaign matching Decoded text (QR ID)
+      const qrs = db.qrs || [];
+      const camp = qrs.find(q => q.qr_id === decodedText);
+      
+      if (!camp) {
+        Swal.close();
+        playSound('error');
+        Swal.fire({ icon: 'error', title: 'สแกนล้มเหลว', text: 'ไม่พบรหัสแคมเปญ QR โบนัสแต้มนี้ในระบบ!' });
+        return;
+      }
+
+      // Check expiry date
+      const today = getTodayString();
+      if (camp.expiry_date && today > camp.expiry_date) {
+        Swal.close();
+        playSound('error');
+        Swal.fire({ icon: 'error', title: 'รหัสหมดอายุ', text: `แคมเปญนี้สิ้นสุดแล้วเมื่อวันที่ ${camp.expiry_date}` });
+        return;
+      }
+
+      // Check single mode limitation
+      if (camp.mode === 'single') {
+        const history = db.history || [];
+        const alreadyClaimed = history.some(h => h.empId === currentUser.empId && h.action_type === 'qr' && h.details.includes(camp.qr_id));
+        if (alreadyClaimed) {
+          Swal.close();
+          playSound('error');
+          Swal.fire({ icon: 'warning', title: 'เคยเคลมแล้ว', text: 'รหัสแคมเปญนี้สแกนสะสมแต้มได้เพียง 1 ครั้งต่อคนเท่านั้น!' });
+          return;
+        }
+      }
+
+      // Successful Reward Granting
+      const pts = parseInt(camp.points) || 0;
+      await syncSave(() => {
+        const dbUser = db.users.find(u => u.empId === currentUser.empId);
+        dbUser.points = String((parseInt(dbUser.points) || 0) + pts);
+        currentUser = dbUser;
+
+        db.history.push({
+          id: 'H_' + Date.now(),
+          empId: currentUser.empId,
+          action_type: 'qr',
+          points: String(pts),
+          timestamp: getFormattedTimestamp(),
+          details: `สแกน QR แคมเปญ: ${camp.name} (${camp.qr_id})`
+        });
+      });
+
+      Swal.close();
+      playSound('success');
+      Swal.fire({
+        icon: 'success',
+        title: 'สะสมแต้มสำเร็จ!',
+        text: `แคมเปญ: ${camp.name} ได้รับ +${pts} ใบไม้รางวัล`,
+        confirmButtonColor: '#5C8D67'
+      });
+      switchPage('dashboard');
+    }
+
+    function onQrCodeScanFailure(error) {
+      // quiet logger to avoid spamming the UI
+    }
+
+    // 8. LEADERBOARD / RANKINGS VIEW
+    function initLeaderboardWeeklyDropdown() {
+      const select = document.getElementById('leaderboard-week-select');
+      select.innerHTML = "";
+      
+      const settingsVal = db.settings || [];
+      const cycleSetting = settingsVal.find(s => s.key === 'weekly_cycles');
+      
+      if (cycleSetting) {
+        try {
+          const cycles = JSON.parse(cycleSetting.value) || [];
+          cycles.forEach(c => {
+            select.innerHTML += `<option value="${c.id}">${c.id} (${c.start_date} ถึง ${c.end_date})</option>`;
+          });
+        } catch (e) {
+          console.error("Cycles listing failed", e);
+        }
+      }
+    }
+
+    function toggleLeaderboardTab(tab) {
+      activeLeaderboardTab = tab;
+      
+      const btnWeekly = document.getElementById('btn-tab-weekly');
+      const btnAll = document.getElementById('btn-tab-alltime');
+      const filter = document.getElementById('leaderboard-weekly-filter');
+      
+      if (tab === 'weekly') {
+        btnWeekly.className = "flex-grow py-2 text-xs font-bold rounded-lg bg-primary text-white transition";
+        btnAll.className = "flex-grow py-2 text-xs font-bold rounded-lg text-gray-500 transition";
+        filter.classList.remove('hidden');
+      } else {
+        btnWeekly.className = "flex-grow py-2 text-xs font-bold rounded-lg text-gray-500 transition";
+        btnAll.className = "flex-grow py-2 text-xs font-bold rounded-lg bg-primary text-white transition";
+        filter.classList.add('hidden');
+      }
+      
+      renderLeaderboard();
+    }
+
+    function renderLeaderboard() {
+      const list = document.getElementById('leaderboard-list');
+      list.innerHTML = "";
+
+      const users = db.users || [];
+      const history = db.history || [];
+      
+      // Exclude Admin (empId: admin123)
+      let eligibleUsers = users.filter(u => u.empId !== 'admin123');
+      let rankingList = [];
+
+      if (activeLeaderboardTab === 'alltime') {
+        // All-time rankings
+        rankingList = eligibleUsers.map(u => ({
+          empId: u.empId,
+          nickname: u.nickname,
+          points: parseInt(u.points) || 0
+        }));
+      } else {
+        // Weekly rankings
+        const select = document.getElementById('leaderboard-week-select');
+        const selectedWeekId = select.value;
+        
+        // Find week dates
+        const settingsVal = db.settings || [];
+        const cycleSetting = settingsVal.find(s => s.key === 'weekly_cycles');
+        let weekConfig = null;
+        if (cycleSetting) {
+          try {
+            const cycles = JSON.parse(cycleSetting.value);
+            weekConfig = cycles.find(c => c.id === selectedWeekId);
+          } catch(e){}
+        }
+
+        if (weekConfig) {
+          // Sum points for this week's history entries for each user
+          eligibleUsers.forEach(u => {
+            const userHist = history.filter(h => 
+              h.empId === u.empId &&
+              h.timestamp.split(' ')[0] >= weekConfig.start_date &&
+              h.timestamp.split(' ')[0] <= weekConfig.end_date
+            );
+            const sumPoints = userHist.reduce((acc, curr) => acc + (parseInt(curr.points) || 0), 0);
+            rankingList.push({
+              empId: u.empId,
+              nickname: u.nickname,
+              points: sumPoints
+            });
+          });
+        }
+      }
+
+      // Sort by points descending
+      rankingList.sort((a, b) => b.points - a.points);
+
+      // Render rows
+      rankingList.forEach((user, index) => {
+        const rank = index + 1;
+        let rankBadge = rank;
+        if (rank === 1) rankBadge = `👑 <span class="text-amber-500 font-extrabold">1</span>`;
+        else if (rank === 2) rankBadge = `🥈 <span class="text-gray-400 font-extrabold">2</span>`;
+        else if (rank === 3) rankBadge = `🥉 <span class="text-amber-700 font-extrabold">3</span>`;
+        
+        const isSelf = currentUser && user.empId === currentUser.empId;
+        const rowBg = isSelf ? 'bg-primary/10 border-l-4 border-l-primary font-semibold' : 'border-b border-secondary/10';
+
+        list.innerHTML += `
+          <tr class="${rowBg} text-xs">
+            <td class="p-3 text-center">${rankBadge}</td>
+            <td class="p-3">
+              <div>
+                <p class="font-bold text-dark">${user.nickname}</p>
+                <p class="text-[9px] text-gray-500">ID: ${user.empId}</p>
+              </div>
+            </td>
+            <td class="p-3 text-right font-extrabold text-primary">${user.points} ใบไม้</td>
+          </tr>
+        `;
+      });
+
+      // Render Sticky status bar of current user at the top
+      if (currentUser && currentUser.empId !== 'admin123') {
+        const myRankIndex = rankingList.findIndex(u => u.empId === currentUser.empId);
+        const myRank = myRankIndex !== -1 ? `#${myRankIndex + 1}` : '--';
+        const myPts = myRankIndex !== -1 ? rankingList[myRankIndex].points : 0;
+        
+        document.getElementById('sticky-user-rank').innerText = myRank;
+        document.getElementById('sticky-user-name').innerText = currentUser.nickname;
+        document.getElementById('sticky-user-points').innerText = `${myPts} ใบไม้`;
+        document.getElementById('sticky-rank-banner').classList.remove('hidden');
+      } else {
+        document.getElementById('sticky-rank-banner').classList.add('hidden');
+      }
+    }
+
+    // 9. ADMIN CENTER CONTROLS & CRUD MODULE
+    function renderAdminDashboard() {
+      // Prepopulate systems fields
+      document.getElementById('admin-gas-url').value = currentGasUrl;
+      document.getElementById('admin-sheet-id').value = currentSheetId;
+      
+      const logoSetting = db.settings.find(s => s.key === 'logo_url');
+      const bgMorningSetting = db.settings.find(s => s.key === 'bg_morning');
+      const bgNightSetting = db.settings.find(s => s.key === 'bg_night');
+      const announcementSetting = db.settings.find(s => s.key === 'announcements');
+      
+      if (logoSetting) document.getElementById('admin-logo-url').value = logoSetting.value;
+      if (bgMorningSetting) document.getElementById('admin-bg-morning').value = bgMorningSetting.value;
+      if (bgNightSetting) document.getElementById('admin-bg-night').value = bgNightSetting.value;
+      if (announcementSetting) {
+        try {
+          const arr = JSON.parse(announcementSetting.value);
+          document.getElementById('admin-announcements').value = arr.join("\n");
+        } catch(e){}
+      }
+      
+      // Update logo icon in UI headers
+      if (logoSetting && logoSetting.value) {
+        document.getElementById('header-logo').src = logoSetting.value;
+        document.getElementById('login-logo').src = logoSetting.value;
+      }
+
+      // Populate child lists
+      renderAdminLevelList();
+      renderAdminBinsList();
+      renderAdminWastesList();
+      renderAdminWeeklyCyclesList();
+      renderAdminQRsList();
+      renderAdminUsersList();
+    }
+
+    function switchAdminTab(tabId) {
+      activeAdminTab = tabId;
+      const tabs = ['sys', 'level', 'game', 'qr', 'user'];
+      
+      tabs.forEach(t => {
+        const btn = document.getElementById(`adm-tab-${t}`);
+        const panel = document.getElementById(`admin-panel-${t}`);
+        if (t === tabId) {
+          btn.className = "px-4 py-2 text-xs font-bold rounded-lg bg-primary text-white whitespace-nowrap";
+          panel.classList.remove('hidden');
+        } else {
+          btn.className = "px-4 py-2 text-xs font-bold rounded-lg text-gray-500 bg-white whitespace-nowrap border border-secondary/10";
+          panel.classList.add('hidden');
+        }
+      });
+    }
+
+    // Connect to Google Apps Script Sheet
+    async function testGASConnection() {
+      const url = document.getElementById('admin-gas-url').value.trim();
+      const sheetId = document.getElementById('admin-sheet-id').value.trim();
+      
+      if (!url || !sheetId) {
+        Swal.fire({ icon: 'warning', title: 'กรุณากรอกข้อมูล', text: 'กรอก URL และ Sheet ID ให้ครบถ้วน' });
+        return;
+      }
+      
+      Swal.fire({ title: 'กำลังทดสอบเชื่อมต่อ...', didOpen: () => { Swal.showLoading(); } });
+      
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'omit',
+          body: JSON.stringify({
+            action: 'init',
+            sheetId: sheetId
+          })
+        });
+        const result = await response.json();
+        
+        if (result && (
+          (result.status && (String(result.status).toLowerCase() === 'success' || result.status === true)) ||
+          (result.message && (result.message.includes('สำเร็จ') || result.message.toLowerCase().includes('success') || result.message.includes('initialized')))
+        )) {
+          currentGasUrl = url;
+          currentSheetId = sheetId;
+          localStorage.setItem("gasUrl", url);
+          localStorage.setItem("sheetId", sheetId);
+          
+          // Pull latest database state from sheet
+          await loadFromCloud();
+          renderAdminDashboard();
+          
+          Swal.fire({ icon: 'success', title: 'เชื่อมต่อสำเร็จ', text: 'ติดตั้งตารางและเชื่อมต่อระบบ Google Sheets สำเร็จ!' });
+        } else {
+          Swal.fire({ icon: 'error', title: 'เชื่อมต่อล้มเหลว', text: result.message || 'เกิดข้อผิดพลาดในการรัน API' });
+        }
+      } catch (e) {
+        console.error(e);
+        Swal.fire({ icon: 'error', title: 'ข้อผิดพลาดเครือข่าย', text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ GAS ได้ ตรวจสอบ URL หรือสิทธิ์ CORS' });
+      }
+    }
+
+    async function saveAdminSystemImages() {
+      const logo = document.getElementById('admin-logo-url').value.trim();
+      const bgM = document.getElementById('admin-bg-morning').value.trim();
+      const bgN = document.getElementById('admin-bg-night').value.trim();
+      const annText = document.getElementById('admin-announcements').value.trim();
+      
+      const annArr = annText.split("\n").map(l => l.trim()).filter(l => l !== "");
+      
+      Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => { Swal.showLoading(); } });
+      
+      await syncSave(() => {
+        db.settings.find(s => s.key === 'logo_url').value = logo;
+        db.settings.find(s => s.key === 'bg_morning').value = bgM;
+        db.settings.find(s => s.key === 'bg_night').value = bgN;
+        db.settings.find(s => s.key === 'announcements').value = JSON.stringify(annArr);
+      });
+      
+      Swal.close();
+      Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'บันทึกรูปภาพระบบสำเร็จ' });
+      renderAdminDashboard();
+      updateGlobalTimeBackground();
+    }
+
+    // 2. Levels CRUD
+    function renderAdminLevelList() {
+      const list = document.getElementById('admin-level-list');
+      list.innerHTML = "";
+      const levels = db.levels || [];
+      levels.forEach(lvl => {
+        list.innerHTML += `
+          <tr class="border-b text-xs">
+            <td class="p-2 font-semibold">${lvl.level_id}</td>
+            <td class="p-2">${lvl.name}</td>
+            <td class="p-2 font-bold text-primary">${lvl.min_points}</td>
+            <td class="p-2 font-mono" style="color: ${lvl.bg_color}">${lvl.bg_color}</td>
+            <td class="p-2 text-center">
+              <button onclick="openEditLevelModal('${lvl.level_id}')" class="text-blue-500 mr-2"><i class="fa-solid fa-pen"></i></button>
+              <button onclick="deleteLevel('${lvl.level_id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function openAddLevelModal() {
+      const fields = document.getElementById('admin-editor-fields');
+      fields.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">Level ID</label>
+          <input id="edit-lvl-id" type="number" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ชื่อระดับ (Name)</label>
+          <input id="edit-lvl-name" type="text" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">คะแนนขั้นต่ำ (Min Points)</label>
+          <input id="edit-lvl-min" type="number" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">URL รูปหน้า Dashboard</label>
+          <input id="edit-lvl-bg" type="text" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">สีพื้นหลังการ์ด (Hex)</label>
+          <input id="edit-lvl-color" type="color" value="#5C8D67" class="w-full h-8 bg-transparent rounded outline-none cursor-pointer">
+        </div>
+      `;
+      document.getElementById('admin-editor-title').innerText = "เพิ่มระดับผู้ใช้ใหม่";
+      const saveBtn = document.getElementById('btn-admin-editor-save');
+      saveBtn.onclick = async () => {
+        const id = document.getElementById('edit-lvl-id').value.trim();
+        const name = document.getElementById('edit-lvl-name').value.trim();
+        const min = document.getElementById('edit-lvl-min').value.trim();
+        const bg = document.getElementById('edit-lvl-bg').value.trim();
+        const col = document.getElementById('edit-lvl-color').value.trim();
+        
+        if (!id || !name || !min || !bg) return;
+        
+        await syncSave(() => {
+          db.levels.push({ level_id: id, name: name, min_points: min, dashboard_bg: bg, bg_color: col });
+        });
+        closeAllSheets();
+        renderAdminDashboard();
+      };
+      openSheet('admin-editor');
+    }
+
+    function openEditLevelModal(lvlId) {
+      const lvl = db.levels.find(l => l.level_id === lvlId);
+      if (!lvl) return;
+      
+      const fields = document.getElementById('admin-editor-fields');
+      fields.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">Level ID (ไม่สามารถแก้ได้)</label>
+          <input id="edit-lvl-id" type="number" value="${lvl.level_id}" disabled class="w-full p-2 bg-gray-100 rounded-xl text-xs outline-none cursor-not-allowed">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ชื่อระดับ (Name)</label>
+          <input id="edit-lvl-name" type="text" value="${lvl.name}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">คะแนนขั้นต่ำ (Min Points)</label>
+          <input id="edit-lvl-min" type="number" value="${lvl.min_points}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">URL รูปหน้า Dashboard</label>
+          <input id="edit-lvl-bg" type="text" value="${lvl.dashboard_bg}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">สีพื้นหลังการ์ด (Hex)</label>
+          <input id="edit-lvl-color" type="color" value="${lvl.bg_color}" class="w-full h-8 bg-transparent rounded outline-none cursor-pointer">
+        </div>
+      `;
+      document.getElementById('admin-editor-title').innerText = "แก้ไขระดับผู้ใช้";
+      const saveBtn = document.getElementById('btn-admin-editor-save');
+      saveBtn.onclick = async () => {
+        const name = document.getElementById('edit-lvl-name').value.trim();
+        const min = document.getElementById('edit-lvl-min').value.trim();
+        const bg = document.getElementById('edit-lvl-bg').value.trim();
+        const col = document.getElementById('edit-lvl-color').value.trim();
+        
+        await syncSave(() => {
+          const l = db.levels.find(x => x.level_id === lvlId);
+          l.name = name;
+          l.min_points = min;
+          l.dashboard_bg = bg;
+          l.bg_color = col;
+        });
+        closeAllSheets();
+        renderAdminDashboard();
+      };
+      openSheet('admin-editor');
+    }
+
+    async function deleteLevel(lvlId) {
+      Swal.fire({
+        title: 'ยืนยันการลบ?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#D9534F',
+        confirmButtonText: 'ลบ',
+        cancelButtonText: 'ยกเลิก'
+      }).then(async (res) => {
+        if (res.isConfirmed) {
+          await syncSave(() => {
+            db.levels = db.levels.filter(l => l.level_id !== lvlId);
+          });
+          renderAdminDashboard();
+        }
+      });
+    }
+
+    // 3. Bins CRUD
+    function renderAdminBinsList() {
+      const list = document.getElementById('admin-bins-list');
+      list.innerHTML = "";
+      const bins = db.bins || [];
+      bins.forEach(bin => {
+        const stageText = bin.stage === 'indoor' ? 'ในอาคาร' : bin.stage === 'outdoor' ? 'นอกอาคาร' : 'ทุกด่าน';
+        list.innerHTML += `
+          <tr class="border-b text-xs">
+            <td class="p-2 font-mono">${bin.bin_id}</td>
+            <td class="p-2">${bin.name}</td>
+            <td class="p-2 font-mono" style="color: ${bin.color}">${bin.color}</td>
+            <td class="p-2">${stageText}</td>
+            <td class="p-2 text-center">
+              <button onclick="openEditBinModal('${bin.bin_id}')" class="text-blue-500 mr-2"><i class="fa-solid fa-pen"></i></button>
+              <button onclick="deleteBin('${bin.bin_id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function openAddBinModal() {
+      const fields = document.getElementById('admin-editor-fields');
+      fields.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ID ถัง (ภาษาอังกฤษตัวเล็กเท่านั้น)</label>
+          <input id="edit-bin-id" type="text" placeholder="เช่น organic, plastic" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ชื่อถังขยะ</label>
+          <input id="edit-bin-name" type="text" placeholder="เช่น ถังขยะเปียก" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">สีถัง (Hex)</label>
+          <input id="edit-bin-color" type="color" value="#5C8D67" class="w-full h-8 bg-transparent rounded outline-none cursor-pointer">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">URL รูปภาพถังขยะ</label>
+          <input id="edit-bin-image" type="text" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">เฉพาะด่านไหน</label>
+          <select id="edit-bin-stage" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+            <option value="both">แสดงทุกด่าน</option>
+            <option value="indoor">เฉพาะด่านในอาคารผลิต</option>
+            <option value="outdoor">เฉพาะด่านนอกอาคารผลิต</option>
+          </select>
+        </div>
+      `;
+      document.getElementById('admin-editor-title').innerText = "เพิ่มถังขยะใหม่";
+      const saveBtn = document.getElementById('btn-admin-editor-save');
+      saveBtn.onclick = async () => {
+        const id = document.getElementById('edit-bin-id').value.trim();
+        const name = document.getElementById('edit-bin-name').value.trim();
+        const color = document.getElementById('edit-bin-color').value.trim();
+        const img = document.getElementById('edit-bin-image').value.trim();
+        const stage = document.getElementById('edit-bin-stage').value.trim();
+        
+        if (!id || !name || !img) return;
+        
+        await syncSave(() => {
+          db.bins.push({ bin_id: id, name: name, color: color, image_url: img, stage: stage });
+        });
+        closeAllSheets();
+        renderAdminDashboard();
+      };
+      openSheet('admin-editor');
+    }
+
+    function openEditBinModal(binId) {
+      const bin = db.bins.find(b => b.bin_id === binId);
+      if (!bin) return;
+      
+      const fields = document.getElementById('admin-editor-fields');
+      fields.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ID ถัง (ไม่สามารถแก้ได้)</label>
+          <input id="edit-bin-id" type="text" value="${bin.bin_id}" disabled class="w-full p-2 bg-gray-100 rounded-xl text-xs outline-none cursor-not-allowed">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ชื่อถังขยะ</label>
+          <input id="edit-bin-name" type="text" value="${bin.name}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">สีถัง (Hex)</label>
+          <input id="edit-bin-color" type="color" value="${bin.color}" class="w-full h-8 bg-transparent rounded outline-none cursor-pointer">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">URL รูปภาพถังขยะ</label>
+          <input id="edit-bin-image" type="text" value="${bin.image_url}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">เฉพาะด่านไหน</label>
+          <select id="edit-bin-stage" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+            <option value="both" ${bin.stage === 'both' ? 'selected' : ''}>แสดงทุกด่าน</option>
+            <option value="indoor" ${bin.stage === 'indoor' ? 'selected' : ''}>เฉพาะด่านในอาคารผลิต</option>
+            <option value="outdoor" ${bin.stage === 'outdoor' ? 'selected' : ''}>เฉพาะด่านนอกอาคารผลิต</option>
+          </select>
+        </div>
+      `;
+      document.getElementById('admin-editor-title').innerText = "แก้ไขถังขยะ";
+      const saveBtn = document.getElementById('btn-admin-editor-save');
+      saveBtn.onclick = async () => {
+        const name = document.getElementById('edit-bin-name').value.trim();
+        const color = document.getElementById('edit-bin-color').value.trim();
+        const img = document.getElementById('edit-bin-image').value.trim();
+        const stage = document.getElementById('edit-bin-stage').value.trim();
+        
+        await syncSave(() => {
+          const b = db.bins.find(x => x.bin_id === binId);
+          b.name = name;
+          b.color = color;
+          b.image_url = img;
+          b.stage = stage;
+        });
+        closeAllSheets();
+        renderAdminDashboard();
+      };
+      openSheet('admin-editor');
+    }
+
+    async function deleteBin(binId) {
+      Swal.fire({
+        title: 'ยืนยันการลบ?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#D9534F',
+        confirmButtonText: 'ลบ',
+        cancelButtonText: 'ยกเลิก'
+      }).then(async (res) => {
+        if (res.isConfirmed) {
+          await syncSave(() => {
+            db.bins = db.bins.filter(b => b.bin_id !== binId);
+          });
+          renderAdminDashboard();
+        }
+      });
+    }
+
+    // 4. Wastes CRUD & CSV Export/Import
+    function renderAdminWastesList() {
+      const list = document.getElementById('admin-wastes-list');
+      list.innerHTML = "";
+      const wastes = db.wastes || [];
+      wastes.forEach(w => {
+        list.innerHTML += `
+          <tr class="border-b text-xs">
+            <td class="p-2 font-semibold">${w.name}</td>
+            <td class="p-2 font-bold text-primary">${w.bin_id}</td>
+            <td class="p-2 uppercase">${w.stage}</td>
+            <td class="p-2 text-center">
+              <button onclick="openEditWasteModal('${w.waste_id}')" class="text-blue-500 mr-2"><i class="fa-solid fa-pen"></i></button>
+              <button onclick="deleteWaste('${w.waste_id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function openAddWasteModal() {
+      const fields = document.getElementById('admin-editor-fields');
+      
+      let binOptions = "";
+      db.bins.forEach(b => {
+        binOptions += `<option value="${b.bin_id}">${b.name}</option>`;
+      });
+
+      fields.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ID ขยะ (ภาษาอังกฤษ)</label>
+          <input id="edit-waste-id" type="text" placeholder="เช่น w11, waste_cup" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ชื่อขยะ (Name)</label>
+          <input id="edit-waste-name" type="text" placeholder="เช่น แก้วกระดาษ" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">URL รูปภาพขยะ</label>
+          <input id="edit-waste-image" type="text" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ถังขยะที่ถูกต้อง</label>
+          <select id="edit-waste-bin" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+            ${binOptions}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">โผล่เฉพาะด่านไหน</label>
+          <select id="edit-waste-stage" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+            <option value="both">โผล่ทั้งสองด่าน</option>
+            <option value="indoor">ด่านในอาคารเท่านั้น</option>
+            <option value="outdoor">ด่านกลางแจ้งเท่านั้น</option>
+          </select>
+        </div>
+      `;
+      document.getElementById('admin-editor-title').innerText = "เพิ่มขยะในระบบ";
+      const saveBtn = document.getElementById('btn-admin-editor-save');
+      saveBtn.onclick = async () => {
+        const id = document.getElementById('edit-waste-id').value.trim();
+        const name = document.getElementById('edit-waste-name').value.trim();
+        const img = document.getElementById('edit-waste-image').value.trim();
+        const bin = document.getElementById('edit-waste-bin').value.trim();
+        const stage = document.getElementById('edit-waste-stage').value.trim();
+        
+        if (!id || !name || !img) return;
+        
+        await syncSave(() => {
+          db.wastes.push({ waste_id: id, name: name, image_url: img, bin_id: bin, stage: stage });
+        });
+        closeAllSheets();
+        renderAdminDashboard();
+      };
+      openSheet('admin-editor');
+    }
+
+    function openEditWasteModal(wasteId) {
+      const waste = db.wastes.find(w => w.waste_id === wasteId);
+      if (!waste) return;
+      
+      const fields = document.getElementById('admin-editor-fields');
+      let binOptions = "";
+      db.bins.forEach(b => {
+        const sel = b.bin_id === waste.bin_id ? "selected" : "";
+        binOptions += `<option value="${b.bin_id}" ${sel}>${b.name}</option>`;
+      });
+
+      fields.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ID ขยะ (ไม่สามารถแก้ไขได้)</label>
+          <input id="edit-waste-id" type="text" value="${waste.waste_id}" disabled class="w-full p-2 bg-gray-100 rounded-xl text-xs outline-none cursor-not-allowed">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ชื่อขยะ (Name)</label>
+          <input id="edit-waste-name" type="text" value="${waste.name}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">URL รูปภาพขยะ</label>
+          <input id="edit-waste-image" type="text" value="${waste.image_url}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ถังขยะที่ถูกต้อง</label>
+          <select id="edit-waste-bin" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+            ${binOptions}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">โผล่เฉพาะด่านไหน</label>
+          <select id="edit-waste-stage" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+            <option value="both" ${waste.stage === 'both' ? 'selected' : ''}>โผล่ทั้งสองด่าน</option>
+            <option value="indoor" ${waste.stage === 'indoor' ? 'selected' : ''}>ด่านในอาคารเท่านั้น</option>
+            <option value="outdoor" ${waste.stage === 'outdoor' ? 'selected' : ''}>ด่านกลางแจ้งเท่านั้น</option>
+          </select>
+        </div>
+      `;
+      document.getElementById('admin-editor-title').innerText = "แก้ไขข้อมูลขยะ";
+      const saveBtn = document.getElementById('btn-admin-editor-save');
+      saveBtn.onclick = async () => {
+        const name = document.getElementById('edit-waste-name').value.trim();
+        const img = document.getElementById('edit-waste-image').value.trim();
+        const bin = document.getElementById('edit-waste-bin').value.trim();
+        const stage = document.getElementById('edit-waste-stage').value.trim();
+        
+        await syncSave(() => {
+          const w = db.wastes.find(x => x.waste_id === wasteId);
+          w.name = name;
+          w.image_url = img;
+          w.bin_id = bin;
+          w.stage = stage;
+        });
+        closeAllSheets();
+        renderAdminDashboard();
+      };
+      openSheet('admin-editor');
+    }
+
+    async function deleteWaste(wasteId) {
+      Swal.fire({
+        title: 'ยืนยันการลบ?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#D9534F',
+        confirmButtonText: 'ลบ',
+        cancelButtonText: 'ยกเลิก'
+      }).then(async (res) => {
+        if (res.isConfirmed) {
+          await syncSave(() => {
+            db.wastes = db.wastes.filter(w => w.waste_id !== wasteId);
+          });
+          renderAdminDashboard();
+        }
+      });
+    }
+
+    // CSV Import Export logic for Wastes & Bins (with Thai encoding support)
+    function exportWastesCSV() {
+      const wastes = db.wastes || [];
+      let csvContent = "\uFEFFwaste_id,name,image_url,bin_id,stage\n";
+      wastes.forEach(w => {
+        csvContent += `"${w.waste_id}","${w.name}","${w.image_url}","${w.bin_id}","${w.stage}"\n`;
+      });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "wastes_database.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function triggerCSVImport() {
+      document.getElementById('csv-import-file').click();
+    }
+
+    function importWastesCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const text = e.target.result;
+        const lines = text.split("\n").map(l => l.trim()).filter(l => l !== "");
+        
+        if (lines.length <= 1) return;
+
+        const imported = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+          if (cols.length >= 5) {
+            imported.push({
+              waste_id: cols[0],
+              name: cols[1],
+              image_url: cols[2],
+              bin_id: cols[3],
+              stage: cols[4]
+            });
+          }
+        }
+
+        if (imported.length > 0) {
+          Swal.fire({
+            title: `ยืนยันนำเข้าข้อมูลขยะ ${imported.length} รายการ?`,
+            text: "ข้อมูลนี้จะถูกบันทึกทับในฐานข้อมูล",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#5C8D67',
+            confirmButtonText: 'นำเข้าข้อมูล'
+          }).then(async (res) => {
+            if (res.isConfirmed) {
+              Swal.fire({ title: 'กำลังนำเข้าข้อมูล...', didOpen: () => { Swal.showLoading(); } });
+              await syncSave(() => {
+                db.wastes = imported;
+              });
+              Swal.close();
+              Swal.fire({ icon: 'success', title: 'สำเร็จ', text: `นำเข้าฐานข้อมูลขยะ ${imported.length} รายการสำเร็จ!` });
+              renderAdminDashboard();
+            }
+          });
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    // Bins CSV Import/Export
+    function exportBinsCSV() {
+      const bins = db.bins || [];
+      let csvContent = "\uFEFFbin_id,name,color,image_url,stage\n";
+      bins.forEach(b => {
+        csvContent += `"${b.bin_id}","${b.name}","${b.color}","${b.image_url}","${b.stage || 'both'}"\n`;
+      });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "bins_database.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function triggerBinsCSVImport() {
+      document.getElementById('csv-bins-import-file').click();
+    }
+
+    function importBinsCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const text = e.target.result;
+        const lines = text.split("\n").map(l => l.trim()).filter(l => l !== "");
+        
+        if (lines.length <= 1) return;
+
+        const imported = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+          if (cols.length >= 4) {
+            imported.push({
+              bin_id: cols[0],
+              name: cols[1],
+              color: cols[2],
+              image_url: cols[3],
+              stage: cols[4] || "both"
+            });
+          }
+        }
+
+        if (imported.length > 0) {
+          Swal.fire({
+            title: `ยืนยันนำเข้าข้อมูลถังขยะ ${imported.length} รายการ?`,
+            text: "ข้อมูลนี้จะถูกบันทึกทับในฐานข้อมูล",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#5C8D67',
+            confirmButtonText: 'นำเข้าข้อมูล'
+          }).then(async (res) => {
+            if (res.isConfirmed) {
+              Swal.fire({ title: 'กำลังนำเข้าข้อมูล...', didOpen: () => { Swal.showLoading(); } });
+              await syncSave(() => {
+                db.bins = imported;
+              });
+              Swal.close();
+              Swal.fire({ icon: 'success', title: 'สำเร็จ', text: `นำเข้าฐานข้อมูลถังขยะ ${imported.length} รายการสำเร็จ!` });
+              renderAdminDashboard();
+            }
+          });
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    // 5. QR Campaign / Weeks CRUD
+    function renderAdminWeeklyCyclesList() {
+      const container = document.getElementById('weekly-cycles-admin-list');
+      container.innerHTML = "";
+      
+      const settingsVal = db.settings || [];
+      const cycleSetting = settingsVal.find(s => s.key === 'weekly_cycles');
+      if (cycleSetting) {
+        try {
+          const cycles = JSON.parse(cycleSetting.value) || [];
+          cycles.forEach((c, idx) => {
+            container.innerHTML += `
+              <div class="flex items-center justify-between bg-bg p-3 rounded-xl text-xs">
+                <div>
+                  <p class="font-bold text-dark">สัปดาห์: ${c.id}</p>
+                  <p class="text-[10px] text-gray-500">${c.start_date} ถึง ${c.end_date}</p>
+                </div>
+                <div class="flex items-center">
+                  <button onclick="openEditWeeklyCycleModal('${c.id}')" class="text-blue-500 p-2 mr-2" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                  <button onclick="deleteWeeklyCycle('${c.id}')" class="text-red-500 p-2" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              </div>
+            `;
+          });
+        } catch (e){}
+      }
+    }
+
+    function openEditWeeklyCycleModal(cycleId) {
+      const settingsVal = db.settings || [];
+      const cycleSetting = settingsVal.find(s => s.key === 'weekly_cycles');
+      if (!cycleSetting) return;
+      
+      let cycles = [];
+      try {
+        cycles = JSON.parse(cycleSetting.value) || [];
+      } catch(e) { return; }
+      
+      const cycle = cycles.find(c => c.id === cycleId);
+      if (!cycle) return;
+      
+      const fields = document.getElementById('admin-editor-fields');
+      fields.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ID สัปดาห์ (แก้ไขไม่ได้)</label>
+          <input id="edit-cycle-id" type="text" value="${cycle.id}" disabled class="w-full p-2 bg-gray-100 rounded-xl text-xs outline-none cursor-not-allowed">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">วันที่เริ่มต้น (Start Date)</label>
+          <input id="edit-cycle-start" type="date" value="${cycle.start_date}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">วันที่สิ้นสุด (End Date)</label>
+          <input id="edit-cycle-end" type="date" value="${cycle.end_date}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+      `;
+      document.getElementById('admin-editor-title').innerText = "แก้ไขรอบสัปดาห์";
+      const saveBtn = document.getElementById('btn-admin-editor-save');
+      saveBtn.onclick = async () => {
+        const start = document.getElementById('edit-cycle-start').value.trim();
+        const end = document.getElementById('edit-cycle-end').value.trim();
+        
+        if (!start || !end) return;
+        
+        await syncSave(() => {
+          const cSetting = db.settings.find(s => s.key === 'weekly_cycles');
+          let currentCycles = JSON.parse(cSetting.value) || [];
+          const match = currentCycles.find(c => c.id === cycleId);
+          if (match) {
+            match.start_date = start;
+            match.end_date = end;
+          }
+          cSetting.value = JSON.stringify(currentCycles);
+        });
+        closeAllSheets();
+        renderAdminDashboard();
+      };
+      openSheet('admin-editor');
+    }
+
+    function openAddWeeklyCycleModal() {
+      const fields = document.getElementById('admin-editor-fields');
+      fields.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ID สัปดาห์ (เช่น w3)</label>
+          <input id="edit-cycle-id" type="text" placeholder="เช่น w3" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">วันที่เริ่มต้น (Start Date)</label>
+          <input id="edit-cycle-start" type="date" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">วันที่สิ้นสุด (End Date)</label>
+          <input id="edit-cycle-end" type="date" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+      `;
+      document.getElementById('admin-editor-title').innerText = "เพิ่มรอบสัปดาห์ใหม่";
+      const saveBtn = document.getElementById('btn-admin-editor-save');
+      saveBtn.onclick = async () => {
+        const id = document.getElementById('edit-cycle-id').value.trim();
+        const start = document.getElementById('edit-cycle-start').value.trim();
+        const end = document.getElementById('edit-cycle-end').value.trim();
+        
+        if (!id || !start || !end) return;
+        
+        await syncSave(() => {
+          const cSetting = db.settings.find(s => s.key === 'weekly_cycles');
+          let cycles = JSON.parse(cSetting.value) || [];
+          cycles.push({ id: id, start_date: start, end_date: end });
+          cSetting.value = JSON.stringify(cycles);
+        });
+        closeAllSheets();
+        renderAdminDashboard();
+      };
+      openSheet('admin-editor');
+    }
+
+    async function deleteWeeklyCycle(cycleId) {
+      Swal.fire({
+        title: 'ยืนยันลบรอบสัปดาห์?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#D9534F',
+        confirmButtonText: 'ลบ'
+      }).then(async (res) => {
+        if (res.isConfirmed) {
+          await syncSave(() => {
+            const cSetting = db.settings.find(s => s.key === 'weekly_cycles');
+            let cycles = JSON.parse(cSetting.value) || [];
+            cycles = cycles.filter(c => c.id !== cycleId);
+            cSetting.value = JSON.stringify(cycles);
+          });
+          renderAdminDashboard();
+        }
+      });
+    }
+
+    function renderAdminQRsList() {
+      const list = document.getElementById('admin-qrs-list');
+      list.innerHTML = "";
+      const qrs = db.qrs || [];
+      qrs.forEach(qr => {
+        list.innerHTML += `
+          <tr class="border-b text-xs">
+            <td class="p-2">
+              <div>
+                <p class="font-bold text-dark">${qr.name}</p>
+                <p class="text-[9px] font-mono text-gray-500">${qr.qr_id}</p>
+              </div>
+            </td>
+            <td class="p-2 font-bold text-primary">+${qr.points}</td>
+            <td class="p-2 font-semibold">${qr.mode === 'single' ? 'ครั้งเดียว' : 'ซ้ำได้'}</td>
+            <td class="p-2 text-gray-500">${qr.expiry_date}</td>
+            <td class="p-2 text-center">
+              <button onclick="showPrintableQR('${qr.qr_id}')" class="text-green-600 mr-2" title="แสดง QR สำหรับแชร์/ปริ้น"><i class="fa-solid fa-print"></i></button>
+              <button onclick="openEditQRModal('${qr.qr_id}')" class="text-blue-500 mr-2"><i class="fa-solid fa-pen"></i></button>
+              <button onclick="deleteQR('${qr.qr_id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function showPrintableQR(qrId) {
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrId)}`;
+      Swal.fire({
+        title: `แคมเปญ QR ID: ${qrId}`,
+        html: `
+          <div class="flex flex-col items-center justify-center p-4">
+            <img src="${qrUrl}" class="w-48 h-48 border p-2 bg-white rounded shadow">
+            <p class="text-xs text-gray-500 mt-2 font-semibold">บันทึกรูปนี้หรือแชร์ให้สมาชิกเพื่อสแกนสะสมแต้ม</p>
+          </div>
+        `,
+        confirmButtonColor: '#5C8D67',
+        confirmButtonText: 'ปิดหน้าต่าง'
+      });
+    }
+
+    function openAddQRModal() {
+      const fields = document.getElementById('admin-editor-fields');
+      fields.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">รหัส QR (QR ID)</label>
+          <input id="edit-qr-id" type="text" placeholder="เช่น QR_EVENT_10" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ชื่อแคมเปญ</label>
+          <input id="edit-qr-name" type="text" placeholder="เช่น กิจกรรมปลูกป่า" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">แต้มรางวัล (Points)</label>
+          <input id="edit-qr-points" type="number" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">โหมดการรับสิทธิ์</label>
+          <select id="edit-qr-mode" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+            <option value="single">Single (สแกนรับแต้มได้ครั้งเดียวต่อคน)</option>
+            <option value="multi">Multi (สแกนซ้ำได้เรื่อยๆ)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">วันหมดอายุแคมเปญ (Expiry Date)</label>
+          <input id="edit-qr-expiry" type="date" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+      `;
+      document.getElementById('admin-editor-title').innerText = "สร้าง QR แคมเปญแจกแต้ม";
+      const saveBtn = document.getElementById('btn-admin-editor-save');
+      saveBtn.onclick = async () => {
+        const id = document.getElementById('edit-qr-id').value.trim();
+        const name = document.getElementById('edit-qr-name').value.trim();
+        const points = document.getElementById('edit-qr-points').value.trim();
+        const mode = document.getElementById('edit-qr-mode').value.trim();
+        const expiry = document.getElementById('edit-qr-expiry').value.trim();
+        
+        if (!id || !name || !points || !expiry) return;
+        
+        await syncSave(() => {
+          db.qrs.push({ qr_id: id, name: name, points: points, mode: mode, expiry_date: expiry });
+        });
+        closeAllSheets();
+        renderAdminDashboard();
+      };
+      openSheet('admin-editor');
+    }
+
+    function openEditQRModal(qrId) {
+      const qr = db.qrs.find(q => q.qr_id === qrId);
+      if (!qr) return;
+      
+      const fields = document.getElementById('admin-editor-fields');
+      fields.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">รหัส QR (ไม่สามารถแก้ไขได้)</label>
+          <input id="edit-qr-id" type="text" value="${qr.qr_id}" disabled class="w-full p-2 bg-gray-100 rounded-xl text-xs outline-none cursor-not-allowed">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ชื่อแคมเปญ</label>
+          <input id="edit-qr-name" type="text" value="${qr.name}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">แต้มรางวัล (Points)</label>
+          <input id="edit-qr-points" type="number" value="${qr.points}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">โหมดการรับสิทธิ์</label>
+          <select id="edit-qr-mode" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+            <option value="single" ${qr.mode === 'single' ? 'selected' : ''}>Single (สแกนรับแต้มได้ครั้งเดียวต่อคน)</option>
+            <option value="multi" ${qr.mode === 'multi' ? 'selected' : ''}>Multi (สแกนซ้ำได้เรื่อยๆ)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">วันหมดอายุแคมเปญ (Expiry Date)</label>
+          <input id="edit-qr-expiry" type="date" value="${qr.expiry_date}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+      `;
+      document.getElementById('admin-editor-title').innerText = "แก้ไขแคมเปญ QR";
+      const saveBtn = document.getElementById('btn-admin-editor-save');
+      saveBtn.onclick = async () => {
+        const name = document.getElementById('edit-qr-name').value.trim();
+        const points = document.getElementById('edit-qr-points').value.trim();
+        const mode = document.getElementById('edit-qr-mode').value.trim();
+        const expiry = document.getElementById('edit-qr-expiry').value.trim();
+        
+        await syncSave(() => {
+          const q = db.qrs.find(x => x.qr_id === qrId);
+          q.name = name;
+          q.points = points;
+          q.mode = mode;
+          q.expiry_date = expiry;
+        });
+        closeAllSheets();
+        renderAdminDashboard();
+      };
+      openSheet('admin-editor');
+    }
+
+    async function deleteQR(qrId) {
+      Swal.fire({
+        title: 'ยืนยันการลบ?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#D9534F',
+        confirmButtonText: 'ลบ'
+      }).then(async (res) => {
+        if (res.isConfirmed) {
+          await syncSave(() => {
+            db.qrs = db.qrs.filter(q => q.qr_id !== qrId);
+          });
+          renderAdminDashboard();
+        }
+      });
+    }
+
+    // 6. User Directory Pagination, Edit, Search & Delete
+    let adminUserPage = 1;
+    const adminUserPageSize = 20;
+    let adminFilteredUsers = [];
+
+    function renderAdminUsersList() {
+      const users = db.users || [];
+      const search = document.getElementById('admin-user-search').value.trim().toLowerCase();
+      
+      // Filter list based on search key
+      adminFilteredUsers = users.filter(u => {
+        return u.empId.toLowerCase().includes(search) || u.nickname.toLowerCase().includes(search);
+      });
+
+      // Pagination slice
+      const startIdx = (adminUserPage - 1) * adminUserPageSize;
+      const endIdx = startIdx + adminUserPageSize;
+      const paginated = adminFilteredUsers.slice(startIdx, endIdx);
+
+      // Render pagination indicators
+      const totalPages = Math.max(1, Math.ceil(adminFilteredUsers.length / adminUserPageSize));
+      document.getElementById('admin-page-indicator').innerText = `หน้า ${adminUserPage} / ${totalPages}`;
+      document.getElementById('admin-btn-prev-page').disabled = adminUserPage === 1;
+      document.getElementById('admin-btn-next-page').disabled = adminUserPage === totalPages;
+
+      const list = document.getElementById('admin-users-list');
+      list.innerHTML = "";
+      
+      paginated.forEach(u => {
+        const isAdmin = u.is_admin === "true";
+        list.innerHTML += `
+          <tr class="border-b text-xs">
+            <td class="p-2 font-mono">${u.empId}</td>
+            <td class="p-2 font-semibold">${u.nickname} ${isAdmin ? '<span class="text-red-500 font-bold text-[9px]">(Admin)</span>' : ''}</td>
+            <td class="p-2 font-bold text-primary">${u.points}</td>
+            <td class="p-2 text-center">${u.streak || 0}</td>
+            <td class="p-2 text-center">
+              <button onclick="openEditUserModal('${u.empId}')" class="text-blue-500 mr-2"><i class="fa-solid fa-user-pen"></i></button>
+              <button onclick="deleteUser('${u.empId}')" class="text-red-500" ${isAdmin ? 'disabled' : ''}><i class="fa-solid fa-trash-can"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function adminSearchUsers() {
+      adminUserPage = 1;
+      renderAdminUsersList();
+    }
+
+    function adminChangePage(dir) {
+      adminUserPage = Math.max(1, adminUserPage + dir);
+      renderAdminUsersList();
+    }
+
+    function openEditUserModal(empId) {
+      const user = db.users.find(u => u.empId === empId);
+      if (!user) return;
+
+      const fields = document.getElementById('admin-editor-fields');
+      fields.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">รหัสพนักงาน (ไม่สามารถแก้ได้)</label>
+          <input id="edit-user-empid" type="text" value="${user.empId}" disabled class="w-full p-2 bg-gray-100 rounded-xl text-xs outline-none cursor-not-allowed">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ชื่อเล่น (Nickname)</label>
+          <input id="edit-user-nickname" type="text" value="${user.nickname}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">ใบไม้สะสม (Points)</label>
+          <input id="edit-user-points" type="number" value="${user.points}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-600">เช็คอินต่อเนื่อง (Streak)</label>
+          <input id="edit-user-streak" type="number" value="${user.streak || 0}" class="w-full p-2 bg-bg rounded-xl text-xs outline-none">
+        </div>
+      `;
+      document.getElementById('admin-editor-title').innerText = "แก้ไขข้อมูลผู้เล่น";
+      const saveBtn = document.getElementById('btn-admin-editor-save');
+      saveBtn.onclick = async () => {
+        const nick = document.getElementById('edit-user-nickname').value.trim();
+        const points = document.getElementById('edit-user-points').value.trim();
+        const streak = document.getElementById('edit-user-streak').value.trim();
+        
+        await syncSave(() => {
+          const u = db.users.find(x => x.empId === empId);
+          u.nickname = nick;
+          u.points = points;
+          u.streak = streak;
+        });
+        closeAllSheets();
+        renderAdminDashboard();
+      };
+      openSheet('admin-editor');
+    }
+
+    async function deleteUser(empId) {
+      if (empId === 'admin123') return;
+      
+      Swal.fire({
+        title: 'ยืนยันลบผู้เล่นนี้?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#D9534F',
+        confirmButtonText: 'ลบผู้ใช้'
+      }).then(async (res) => {
+        if (res.isConfirmed) {
+          await syncSave(() => {
+            db.users = db.users.filter(u => u.empId !== empId);
+          });
+          renderAdminDashboard();
+        }
+      });
+    }
+
+    async function adminDeleteAllUsers() {
+      Swal.fire({
+        title: 'ยืนยันลบผู้เล่นทั้งหมด?',
+        text: "ลบผู้ใช้ทั้งหมด (ยกเว้น แอดมิน) ออกจากอุปกรณ์เครื่องนี้และระบบคลาวด์",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#D9534F',
+        confirmButtonText: 'ลบผู้เล่นทั้งหมด'
+      }).then(async (res) => {
+        if (res.isConfirmed) {
+          Swal.fire({ title: 'กำลังลบข้อมูล...', didOpen: () => { Swal.showLoading(); } });
+          await syncSave(() => {
+            db.users = db.users.filter(u => u.empId === 'admin123');
+            db.history = [];
+          });
+          Swal.close();
+          renderAdminDashboard();
+        }
+      });
+    }
+
+    // Call standalone GAS function to deduplicate, verify weekly play limits and recalculate scores
+    async function runGASCleanUpData() {
+      if (!currentGasUrl || !currentSheetId) {
+        Swal.fire({ icon: 'warning', title: 'ไม่ได้เชื่อมต่อคลาวด์', text: 'กรุณาทำการตั้งค่า URL และ Sheet ID ในระบบและเชื่อมต่อก่อน!' });
+        return;
+      }
+
+      Swal.fire({
+        title: 'ยืนยันจัดระเบียบข้อมูลคลาวด์?',
+        text: "ระบบคลาวด์จะทำการหั่นคะแนนประวัติการเล่นเกมที่เกินโควต้า 2 ครั้งต่อสัปดาห์ทิ้ง ลบผู้ใช้ซ้ำซ้อน และคำนวณแต้มสะสมทั้งหมดของคุณใหม่ทั้งหมด",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#5C8D67',
+        confirmButtonText: 'รันจัดระเบียบข้อมูล',
+        cancelButtonText: 'ยกเลิก'
+      }).then(async (res) => {
+        if (res.isConfirmed) {
+          Swal.fire({ title: 'ระบบกำลังจัดระเบียบข้อมูล...', html: 'กรุณารอสักครู่ (อาจใช้เวลา 5-10 วินาที)', didOpen: () => { Swal.showLoading(); } });
+          
+          try {
+            const response = await fetch(currentGasUrl, {
+              method: 'POST',
+              mode: 'cors',
+              credentials: 'omit',
+              body: JSON.stringify({
+                action: 'fix',
+                sheetId: currentSheetId
+              })
+            });
+            const result = await response.json();
+            Swal.close();
+            if (result && (
+              (result.status && (String(result.status).toLowerCase() === 'success' || result.status === true)) ||
+              (result.message && (result.message.includes('สำเร็จ') || result.message.toLowerCase().includes('success') || result.message.includes('เรียบร้อย') || result.message.includes('เสร็จสิ้น')))
+            )) {
+              Swal.fire({ icon: 'success', title: 'จัดระเบียบสำเร็จ', text: result.message || 'จัดระเบียบข้อมูลเสร็จสิ้น' });
+              // Reload from cloud
+              await loadFromCloud();
+              renderAdminDashboard();
+            } else {
+              Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: result.message || 'ไม่สามารถจัดระเบียบข้อมูลได้' });
+            }
+          } catch (e) {
+            Swal.close();
+            console.error(e);
+            Swal.fire({ icon: 'error', title: 'ข้อผิดพลาดเครือข่าย', text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ GAS ได้' });
+          }
+        }
+      });
+    }
+
+    // ==================== SHEET MODAL UTILITIES ====================
+    function openSheet(sheetId) {
+      document.getElementById('bottom-sheet-overlay').classList.add('open');
+      document.getElementById(`sheet-${sheetId}`).classList.add('open');
+    }
+
+    function closeAllSheets() {
+      document.getElementById('bottom-sheet-overlay').classList.remove('open');
+      const sheets = document.querySelectorAll('.bottom-sheet');
+      sheets.forEach(s => s.classList.remove('open'));
+    }
+
+    // ==================== APPLICATION RUNTIME INITIALIZATION ====================
+    window.addEventListener('DOMContentLoaded', async () => {
+      initLandingPage();
+      
+      // Load local config first
+      currentGasUrl = localStorage.getItem("gasUrl") || "";
+      currentSheetId = localStorage.getItem("sheetId") || "";
+      
+      // Fetch DB
+      await loadFromCloud();
+      
+      // Ready
+      console.log("Waste Care World PWA initialized successfully");
+    });
+  </script>
+  </div>
+</body>
+</html>
